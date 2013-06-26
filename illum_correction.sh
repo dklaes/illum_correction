@@ -45,7 +45,7 @@ MODE=$7
 theli_start "$*"
 
 if [ $# -ne 7 ]; then
-  theli_error "Wrong number of command line arguments!"
+  theli_error "Wrong number of command line arguments! You gave me $# but I need 7."
   exit 1;
 fi
 
