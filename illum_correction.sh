@@ -19,15 +19,14 @@
 #     run or "NIGHTCALIB" for illum correction for every night)
 
 
+# Changes from V1.1 to V1.2
+# - included _$$ to temporary files
+
 # Changes from V1.0 to V1.1
 # - corrected estimation of magnitude
 # - deleted time measurements
 # - deleted "illum_correction_plot_fitted.py" command because this file was combined \
 #   with "illum_correction_contourplot_fitfunction.py"
-
-
-# Changes from V1.1 to V1.1
-# - included _$$ to temporary files
 
 MAIND=$1
 STANDARDD=$2
