@@ -75,13 +75,17 @@ do
   fi
 done
 
-# Getting some information about the used camera.
-ROWMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $1}'`
-COLUMNMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $2}'`
-PIXX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $3}'`
-PIXY=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $4}'`
-PIXXMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $1*$3}'`
-PIXYMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $2*$4}'`
+# Getting some information about the used camera. Checking first if ${CHIPGEOMETRY} is not empty.
+if [ "${CHIPGEOMETRY}" == "" ]; then
+  theli_error "Chipgeometry not set! Check in ${INSTRUMENT}.ini if avaiable!"
+else
+  ROWMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $1}'`
+  COLUMNMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $2}'`
+  PIXX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $3}'`
+  PIXY=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $4}'`
+  PIXXMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $1*$3}'`
+  PIXYMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $2*$4}'`
+fi
 
 # Getting all cats into one catalogue (modification needed to update from reduce_KIDS_1.7.2 to 1.7.6)
 # and checking if they are avaiable.
