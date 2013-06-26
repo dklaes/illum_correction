@@ -144,19 +144,19 @@ def plot(arg):
     ax1.plot(XXALL,epswoZPALL,'k.')
     appearance('','Residual','', [CAMXMIN, CAMXMAX], '', 'grid', 'nocamgrid', ax1, 'sub')
 
-    # 3
-    ax3 = fig.add_subplot(2,2,3)
-    plt.setp(ax3.get_xticklabels(), visible=True)
-    plt.setp(ax3.get_yticklabels(), visible=True)
-    ax3.plot(XXALL,FCHIPS,'k.')
-    appearance('Xpos','Residual','', [CAMXMIN, CAMXMAX], '', 'grid', 'nocamgrid', ax3, 'sub')
-
     # 2
     ax2 = fig.add_subplot(2,2,2)
     plt.setp(ax2.get_xticklabels(), visible=False)
     plt.setp(ax2.get_yticklabels(), visible=False)
     ax2.plot(YYALL,epswoZPALL,'k.')
     appearance('','','', [CAMYMIN, CAMYMAX], '', 'grid', 'nocamgrid', ax2, 'sub')
+    
+    # 3
+    ax3 = fig.add_subplot(2,2,3)
+    plt.setp(ax3.get_xticklabels(), visible=True)
+    plt.setp(ax3.get_yticklabels(), visible=True)
+    ax3.plot(XXALL,FCHIPS,'k.')
+    appearance('Xpos','Residual','', [CAMXMIN, CAMXMAX], '', 'grid', 'nocamgrid', ax3, 'sub')
 
     # 4
     ax4 = fig.add_subplot(2,2,4)
@@ -316,6 +316,7 @@ def plot(arg):
     xi = lab.linspace(min(d[:,12]), max(d[:,12]))
     yi = lab.linspace(min(d[:,13]), max(d[:,13]))
 
+    # Optimised order so that zi is computed only once.
     # 1
     ax1 = fig.add_subplot(2, 2, 1)
     zi = lab.griddata(d[:,12], d[:,13], d[:,6], xi, yi)
@@ -326,6 +327,17 @@ def plot(arg):
     ax1.contourf(xi, yi, zi,levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
     appearance('','Ypos','Before fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
 
+    # 3
+    ax3 = fig.add_subplot(2, 2, 3)
+    plt.setp(ax3.get_xticklabels(), visible=True)
+    plt.setp(ax3.get_yticklabels(), visible=True)
+    axbar = ax3.contourf(xi, yi, zi,levels=levels_limit)
+    fig.colorbar(axbar)
+    ax3.contourf(xi, yi, zi,levels=levels_limit)
+    appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
+    
+    
+    # Optimised order so that zi is computed only once.
     # 2
     ax2 = fig.add_subplot(2, 2, 2)
     zi = lab.griddata(d[:,12], d[:,13], d[:,10], xi, yi)
@@ -336,19 +348,8 @@ def plot(arg):
     ax2.contourf(xi, yi, zi,levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
     appearance('','','After fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
 
-    # 3
-    ax3 = fig.add_subplot(2, 2, 3)
-    zi = lab.griddata(d[:,12], d[:,13], d[:,6], xi, yi)
-    plt.setp(ax3.get_xticklabels(), visible=True)
-    plt.setp(ax3.get_yticklabels(), visible=True)
-    axbar = ax3.contourf(xi, yi, zi,levels=levels_limit)
-    fig.colorbar(axbar)
-    ax3.contourf(xi, yi, zi,levels=levels_limit)
-    appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
-
     # 4
     ax4 = fig.add_subplot(2, 2, 4)
-    zi = lab.griddata(d[:,12], d[:,13], d[:,10], xi, yi)
     plt.setp(ax4.get_xticklabels(), visible=True)
     plt.setp(ax4.get_yticklabels(), visible=False)
     axbar = ax4.contourf(xi, yi, zi,levels=levels_limit)
