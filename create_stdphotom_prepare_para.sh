@@ -1,12 +1,14 @@
 #!/bin/bash -u
 
-# create catalogues suitable for absolute photometric calibration with
-# 'create_abs_photo_info.sh'. The script takes astrometric information
-# from a scamp processing and calculates 'correct' sky coordinates
-# from objects catalogues (extracted from standard star
-# fields). Afterwards the standard star object catalogues are merged
-# with a reference standard star sources (e.g. from Landolt, Stetson,
-# Sloan ....)
+# First step to create catalogues suitable for absolute photometric
+# calibration with 'create_abs_photo_info.sh'. The script takes
+# astrometric information from a scamp processing and calculates
+# 'correct' sky coordinates from objects catalogues (extracted from
+# standard star fields). Afterwards the standard star object
+# catalogues are merged with a reference standard star sources.
+# (e.g. from Landolt, Stetson, Sloan ....)
+# This last step is to be performed with the script
+# 'create_stadphotom_merge.sh'
 
 # SCRIPT HISTORY:
 #
@@ -19,6 +21,15 @@
 #
 # 07.01.2013:
 # I made the script more robust to non-existing files.
+#
+# 04.06.2013:
+# I completely rewrote this script by splitting it. The task of estimating
+# correct astrometry for standard star observations and merging them
+# with a standard star catalogue is now donw in two separate scripts.
+# The merging is no longer performed chip-by-chip but on an exposure level.
+# This dramatically reduces the number of necessary associations. The
+# associations became a very long process when we used also KiDS science
+# data (overlapping with SDSS) in the calibration process.
 
 #$1: main directory
 #$2: science dir. (the catalogues are assumed to be in $1/$2/cat)
@@ -26,15 +37,14 @@
 #$4: astrometry standardstar catalogue used for the scamp calibration
 #    (the script needs the scamp headers which are assumed to be in 
 #    $1/$2/headers_scamp_$4)
-#$5: photometric standard star catalogue with full path
-#$6: chips to work on
+#$5: chips to work on
 
 . ./${INSTRUMENT:?}.ini
 . ./bash_functions.include
 theli_start "$*" "${!#}"
 
 # check number of command line arguments:
-if [ $# -ne 6 ]; then
+if [ $# -ne 5 ]; then
   theli_error "Number of command line argument not correct!" "${!#}"
   exit 1;
 fi
@@ -44,61 +54,8 @@ MD=$1
 SD=$2
 EXTENSION=$3
 STANDARDCAT=$4
-PHOTCAT=$5
 
-# create configuration file 'make_ssc' (merging of extracted sources
-# with standard star catalogue below) on the fly:
-grep "COL_INPUT"  ${DATACONF}/stdphotom_prepare_make_ssc.conf |\
-  ${P_GAWK} '{print $3}' > confraw.txt_$$
-
-echo "SeqNr" >> confraw.txt_$$
-
-# get keys that need to be added to stdphotom_prepare_make_ssc.conf
-# from the standardstar catalogue. For simplicity we consider all keys
-# present in the standardstar catalogue but not in our source lists:
-ldacdesc -i ${PHOTCAT} -t STDTAB |\
-   grep "Key name:" | ${P_GAWK} -F. '{print $NF}' > photcat.txt_$$
-
-cat confraw.txt_$$  photcat.txt_$$ | sort | uniq -c |\
-   ${P_GAWK} '($1 == 1) {print $2}' > uniq.txt_$$
-
-cat  photcat.txt_$$ uniq.txt_$$ | sort | uniq -c |\
-   ${P_GAWK} '($1 == 2) {print $2}' > add.txt_$$
-
-cat ${DATACONF}/stdphotom_prepare_make_ssc.conf > \
-  ${TEMPDIR}/make_ssc.conf_$$
-
-# keys that are added from the second (= 1) catalogue
-while read COL
-do
-  {
-    echo "#"
-    echo "COL_NAME  = ${COL}"
-    echo "COL_INPUT = ${COL}"
-    echo "COL_MERGE = AVE_REG"
-    echo "COL_CHAN  = 1"
-  } >>  ${TEMPDIR}/make_ssc.conf_$$
-done < add.txt_$$
-
-# keys that are added from the first (= 0) catalogue
-echo "Xpos" > add2.txt_$$
-echo "Ypos" >> add2.txt_$$
-echo "Xpos_global" >> add2.txt_$$
-echo "Ypos_global" >> add2.txt_$$
-
-while read COL
-do
-  {
-    echo "#"
-    echo "COL_NAME  = ${COL}"
-    echo "COL_INPUT = ${COL}"
-    echo "COL_MERGE = AVE_REG"
-    echo "COL_CHAN  = 0"
-  } >>  ${TEMPDIR}/make_ssc.conf_$$
-done < add2.txt_$$
-
-
-# do the real work now:
+# start script task:
 for CHIP in ${!#}
 do
   CATS=`find ${MD}/${SD}/cat -name \*_${CHIP}${EXTENSION}.cat`
@@ -109,8 +66,8 @@ do
       BASE=`basename ${CAT} .cat`
       HEADBASE=`basename ${CAT} ${EXTENSION}.cat`
       ${P_LDACCONV} -i ${CAT} -o ${MD}/${SD}/cat/${BASE}_ldac.cat \
-                    -b ${CHIP} -c ${INSTRUMENT} -f dummy 
-  
+                    -b ${CHIP} -c ${INSTRUMENT} -f dummy
+
       ${P_LDACTOASC} -b -i ${MD}/${SD}/cat/${BASE}_ldac.cat \
            -t OBJECTS -k ALPHA_J2000 DELTA_J2000 > ${TEMPDIR}/${BASE}_ldac.asc
   
@@ -131,10 +88,11 @@ do
            -o ${MD}/${SD}/cat/${BASE}_ldac_corr_global_coordinates.cat \
            -t OBJECTS -k Xpos_global Ypos_global
       rm ${TEMPDIR}/${BASE}_ldac.asc ${TEMPDIR}/${BASE}_ldac_global.asc ${TEMPDIR}/${BASE}_ldac_global.cat
-  
+
       ${P_MAKEJOIN} -i /${MD}/${SD}/cat/${BASE}_ldac_corr_global_coordinates.cat \
                     -o ${TEMPDIR}/tmp.cat0_$$ \
   		  -c ${DATACONF}/stdphotom_prepare_make_join.conf
+
       # calculate object magnitudes with a magzeropoint of 0 and
       # an exposure time normalisation of 1s (1.08574 is 2.5 / log(10)):
       ${P_LDACCALC} -i ${TEMPDIR}/tmp.cat0_$$ \
@@ -143,30 +101,16 @@ do
                     -n MAG_AUTO_corr "exposure time corr. MAG_AUTO" -k FLOAT
       ${P_LDACRENTAB} -i ${TEMPDIR}/tmp.cat00_$$\
                       -o ${TEMPDIR}/tmp.cat1_$$ -t OBJECTS STDTAB
-      ${P_LDACRENKEY} -i ${TEMPDIR}/tmp.cat1_$$ -o ${TEMPDIR}/tmp.cat2_$$ \
+      ${P_LDACDELTAB} -i ${TEMPDIR}/tmp.cat1_$$\
+                      -o ${TEMPDIR}/tmp.cat11_$$ -t FIELDS
+      ${P_LDACRENKEY} -i ${TEMPDIR}/tmp.cat11_$$ \
+                      -o ${TEMPDIR}/tmp.cat12_$$ \
                       -t STDTAB -k A_WORLD A_WCS B_WORLD B_WCS \
                                    THETA_J2000 THETAWCS
-      ${P_ASSOCIATE} -i ${TEMPDIR}/tmp.cat2_$$ ${PHOTCAT}\
-  		   -o ${TEMPDIR}/tmp.cat3_$$ ${TEMPDIR}/tmp.cat4_$$ \
-                     -t STDTAB -c ${DATACONF}/stdphotom_prepare_associate.conf
-  
-      ${P_LDACFILTER} -i ${TEMPDIR}/tmp.cat3_$$ -o ${TEMPDIR}/tmp.cat5_$$ \
-                      -c "(Pair_1>0);" -t STDTAB
-  
-      if [ "$?" -eq "0" ]; then
-        ${P_LDACFILTER} -i ${TEMPDIR}/tmp.cat4_$$ \
-                        -o ${TEMPDIR}/tmp.cat6_$$ -c "(Pair_0>0);" -t STDTAB
-        ${P_ASSOCIATE} -i ${TEMPDIR}/tmp.cat5_$$ ${TEMPDIR}/tmp.cat6_$$ \
-                       -o ${TEMPDIR}/tmp.cat7_$$ ${TEMPDIR}/tmp.cat8_$$ \
-        	       -t STDTAB -c ${DATACONF}/stdphotom_prepare_associate.conf
-        ${P_MAKESSC} -i ${TEMPDIR}/tmp.cat7_$$ ${TEMPDIR}/tmp.cat8_$$ \
-           	   -o /${MD}/${SD}/cat/${BASE}_merg.cat\
-          	   -t STDTAB \
-                     -c ${TEMPDIR}/make_ssc.conf_$$
-      fi
+      ${P_LDACADDKEY} -i ${TEMPDIR}/tmp.cat12_$$ -t STDTAB \
+		      -o ${MD}/${SD}/cat/${BASE}_photprep.cat \
+		      -k CHIP ${CHIP} SHORT ""
     done
-    ${P_LDACPASTE} -i /${MD}/${SD}/cat/*_${CHIP}${EXTENSION}_merg.cat \
-                   -o /${MD}/${SD}/cat/chip_${CHIP}_merg.cat -t PSSC
   else # if [ "${CATS}" != "" ]
     theli_warn "No catalogues for Chip ${CHIP} available!" "${!#}"
   fi

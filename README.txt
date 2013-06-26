@@ -1,8 +1,33 @@
-This version V1.0 was tested with ldacpipeline-1.7.2 and reduce_KIDS_1.7.5
+This version V1.1 was tested with ldacpipeline-1.7.6 and reduce_KIDS_1.7.6
+
+CHANGES to V1.0:
+- create_stdphotom_prepare_para.sh:
+-- Added CHIP value to catalog
+-- Modified it to the new version of file
+
+- illum_apply.sh:
+-- More comments
+
+- illum_correction.sh:
+-- corrected estimation of magnitude with colour term
+-- deleted time measurements
+-- deleted "illum_correction_plot_fitted.py" command because this file was combined \
+   with "illum_correction_contourplot_fitfunction.py"
+
+- illum_correction_contourplot_fitfunction.py:
+-- more comments
+-- Checkplot magnitude / residual dependency added
+-- Now running also without X-server
+-- old "illum_correction_plot_fitted.py" included and restructed to multiprocessing
+
+- illum_correction_fit.py
+-- more comments
+
+
 
 CHANGES to be done to make it work:
 
-reduce_KIDS_1.7.5:
+reduce_KIDS_1.7.6:
 - progs.ini:
 -- Add "P_SKY2XY=..." for sky to xy coordinate transformation
 -- Add "P_XY2SKY=..." for xy to sky coordinate transformation
@@ -11,7 +36,10 @@ reduce_KIDS_1.7.5:
 -- Add "export NPARA" so it can be used by other programs in the terminal
 
 - create_stdphotom_prepare_para.sh: Replace
--- Adding "Xpos", "Ypos", "Xpos_global" and "Ypos_global" from the first catalog
+-- Adding "Xpos", "Ypos", "Xpos_global", "Ypos_global" and "CHIP" from the first catalog
+
+- create_stdphotom_merge_exposurepara.sh
+-- Modified for global coordinates
 
 - doall_run_OMEGACAM_single.sh: Replace
 -- Adding commands for illumcorrection and illumapply
@@ -28,7 +56,7 @@ reduce_KIDS_1.7.5:
 -- Add "export OFFSETY" so it can be used by other programs in the terminal
 
 
-ldacpipeline-1.7.2:
+ldacpipeline-1.7.6:
 - stdphotom_prepare_global_coordinates.conf: Add to ${DATACONF}
 -- Addition needed for global coordinates
 

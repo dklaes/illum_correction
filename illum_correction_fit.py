@@ -2,6 +2,19 @@
 # -*- coding: utf-8 -*-
 #scipy-0.11 and numpy-1.6.2 required!
 
+# ----------------------------------------------------------------
+# File Name:           illum_correction_fit.py
+# Author:              Dominik Klaes (dklaes@astro.uni-bonn.de)
+# Last modified on:    31.05.2013
+# Version:		V1.1
+# Description:         Fitting polynomial to data
+# ----------------------------------------------------------------
+
+# Changes from V1.0 to V1.1
+# - more comments
+
+# $1  main dir
+
 #Importing packages
 from __future__ import division, print_function
 import matplotlib.pyplot as plt
@@ -20,7 +33,7 @@ def get_data(k):
     chip = np.array([])
     for i in range(k):
       b = np.append(b,np.fromfile(path + "chip_%i.csv" %(i+1), sep="\t"))
-    b = b.reshape((-1,12))
+    b = b.reshape((-1,13))
     x = np.append(x,b[:,7])
     y = np.append(y,b[:,8])
     eps = np.append(eps,b[:,6])

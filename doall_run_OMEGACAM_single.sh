@@ -87,6 +87,24 @@
 #
 # 03.04.2013:
 # I added crosstalk correction for science images in the PREPARE step.
+#
+# 03.05.2013:
+# When 'checking files' we now can output a list of BADMODE images. I
+# want to sort out these completely from the image sample. The script
+# now has a new command line option to specify the output directory
+# for these lists.
+#
+# 06.05.2013:
+# I separated the determination and application of crosstalk coefficients
+# from the prepare step. This allows us to run separately the PREPARE step
+# to catalogue BADMODE images.
+#
+# 11.05.2013:
+# In the PREPARE step we now delete the original files in CLEANUP mode.
+#
+# 17.05.2013:
+# The CLEAN mode now also treats calibration files (final processed BIAS,
+# DARK and FLAT images). The mode for this is 'CLEANCALIB'
 
 # the script is called with
 # ./doall_run_OMEGACAM_single.sh -m "MODE1 MODE2 ...."
@@ -166,6 +184,7 @@ DARKBASEDIR=""
 WEBDIRROOT=""
 SUPERFLLISTDIR="."
 CTLISTDIR="."
+BADMODELISTDIR=""
 SCIENCEBASEDIR=""
 STANDARDBASEDIR=""
 SETBASEDIR=""
@@ -181,6 +200,10 @@ do
        ;;
    -bb)
        BIASBASEDIR=${2}
+       shift 2
+       ;;
+   -bmd)
+       BADMODELISTDIR=${2}
        shift 2
        ;;
    -db)
@@ -318,7 +341,9 @@ export MAGMIN=-100  # dummy for the automatic absolute photometric
                     # calibration mode
 export MAGMAX=100   #      "
 
-PHOTCAT=`pwd`/STRIPE82.cat
+#PHOTCAT=`pwd`/STRIPE82.cat
+#PHOTCAT=`pwd`/../catalogues/KiDS_from_SDSS_cut.cat
+PHOTCAT=`pwd`/../catalogues/thomas_KIDS_SLOAN.cat
 #PHOTCAT=/export/euclid2_1/terben/reduce_KIDS/SLOAN_KIDS_standards.cat
 # default values for color index, extinction coefficient
 # and color term (absolute photometry) in the different
@@ -407,43 +432,61 @@ done
 for mode in ${MODE}
 do
   if [[ "${mode}" =~ "PREPARE" ]]; then
-    IMTYPE=`echo ${mode} | awk '{print substr($0, 8)}'`  
+    IMTYPE=`echo ${mode} | awk '{print substr($0, 8)}'`
     if [ -d ${MD}/${IMTYPE}_${FILTER} ]; then
-      ./process_split_OMEGACAM_eclipse.sh -md ${MD} -sd ${IMTYPE}_${FILTER}
+      CLEANORIG=""  
+      if [ ${CLEANUP} -eq 1 ]; then
+        CLEANORIG="-d"  
+      fi  
+      ./process_split_OMEGACAM_eclipse.sh -md ${MD} -sd ${IMTYPE}_${FILTER}\
+        ${CLEANORIG}
 
       LIMITS="${SCIENCEBADMIN} ${SCIENCEBADMAX}"
       if [ "${IMTYPE}" != "SCIENCE" ]; then
         # limits for valid standard or short exposed science
-        # observations:  
-        LIMITS="50 3500"  
+        # observations:
+        LIMITS="50 3500"
       fi
 
-      ./check_files.sh ${MD} ${IMTYPE}_${FILTER} "" ${LIMITS}
-
-      test -d ${MD}/${IMTYPE}_${FILTER}/CT && \
-       rm -rf ${MD}/${IMTYPE}_${FILTER}/CT
-
-##       # correct science data for crosstalk:
-##       if [[ "${IMTYPE}" =~ "SCIENCE" ]]; then
-##         # if the coefficients have already been determined at some
-##         # earlier stage we do not need to repeat this:
-##         if [ ! -s ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN} ]; then
-##           ./create_crosstalk_coefficients.sh ${MD} ${IMTYPE}_${FILTER} \
-##               OBSTART 0.01 ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN}
-##         fi
-##         ./apply_crosstalk.sh ${MD} ${IMTYPE}_${FILTER} \
-##               ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN} \
-##               ${MD}/${IMTYPE}_${FILTER}/CT ""
-##       fi
-##       if [ -d ${MD}/${IMTYPE}_${FILTER}/CT ]; then
-##         mv ${MD}/${IMTYPE}_${FILTER}/CT/*fits ${MD}/${IMTYPE}_${FILTER}
-##         rmdir ${MD}/${IMTYPE}_${FILTER}/CT
-##       fi
+      if [ "${BADMODELISTDIR}" != "" ]; then
+        test -d ${BADMODELISTDIR} || mkdir ${BADMODELISTDIR}
+        ./check_files_para.sh ${MD} ${IMTYPE}_${FILTER} "" ${LIMITS} \
+            ${BADMODELISTDIR}/BADMODE_${IMTYPE}_${FILTER}_${RUN}.txt
+      else
+        ./check_files_para.sh ${MD} ${IMTYPE}_${FILTER} "" ${LIMITS}
+      fi
 
       # by default remove the BADMODE directory which contains
       # images that we do not further process:
       test -d ${MD}/${IMTYPE}_${FILTER}/BADMODE && \
        rm -rf ${MD}/${IMTYPE}_${FILTER}/BADMODE
+    fi
+  fi
+done
+
+# determine and apply crosstalk coefficients:
+for mode in ${MODE}
+do
+  if [[ "${mode}" =~ "CTCOEFF" ]]; then
+    IMTYPE=`echo ${mode} | awk '{print substr($0, 8)}'`  
+
+    test -d ${MD}/${IMTYPE}_${FILTER}/CT && \
+     rm -rf ${MD}/${IMTYPE}_${FILTER}/CT
+
+    if [[ "${IMTYPE}" =~ "SCIENCE" ]]; then
+      # if the coefficients have already been determined at some
+      # earlier stage we do not need to repeat this:
+      if [ ! -s ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN} ]; then
+        ./create_crosstalk_coefficients.sh ${MD} ${IMTYPE}_${FILTER} \
+            OBSTART 0.01 ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN}
+      fi
+      ./apply_crosstalk.sh ${MD} ${IMTYPE}_${FILTER} \
+            ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN} \
+            ${MD}/${IMTYPE}_${FILTER}/CT ""
+    fi
+    if [ -d ${MD}/${IMTYPE}_${FILTER}/CT ]; then
+      mv ${MD}/${IMTYPE}_${FILTER}/CT/*fits ${MD}/${IMTYPE}_${FILTER}
+      rmdir ${MD}/${IMTYPE}_${FILTER}/CT
     fi
   fi
 done
@@ -940,9 +983,36 @@ do
 
       ./create_scamp_astrom_photom.sh ${MD} STANDARD_${FILTER}\
          OFC${SUPERFLAT}${FRINGING} 2.0 2MASS
-
+ 
       ./parallel_manager.sh ./create_stdphotom_prepare_para.sh ${MD} \
-         STANDARD_${FILTER} OFC${SUPERFLAT}${FRINGING} 2MASS ${PHOTCAT}
+         STANDARD_${FILTER} OFC${SUPERFLAT}${FRINGING} 2MASS
+
+      ./create_stdphotom_merge_exposurepara.sh ${MD} STANDARD_${FILTER} \
+         OFC${SUPERFLAT}${FRINGING}  ${PHOTCAT}
+
+      # filter name in PHOTCAT. It is just the first letter of
+      # the complete FILTER name:
+      FILTNAMSTAND=`echo ${FILTER} | awk '{print substr($0, 1, 1)}'`
+      ./create_abs_photo_info.sh ${MD} STANDARD_${FILTER} \
+         SCIENCE_${FILTER} OFC${SUPERFLAT}${FRINGING} \
+         ${FILTER} ${FILTNAMSTAND} ${COLOR} ${EXT} \
+         ${COLCOEFF} RUNCALIB\
+         AUTOMATIC ${MAGMIN} ${MAGMAX}
+    fi
+    ./create_zp_correct_header.sh ${MD} SCIENCE_${FILTER} \
+         OFC${SUPERFLAT}${FRINGING}
+  fi
+done
+
+for mode in ${MODE}
+do
+  if [ "${mode}" = "ABSPHOTOM2" ]; then
+    if [ -d ${MD}/STANDARD_${FILTER} ]; then
+      ./parallel_manager.sh ./create_stdphotom_prepare_para.sh ${MD} \
+         STANDARD_${FILTER} OFC${SUPERFLAT}${FRINGING} 2MASS
+
+      ./create_stdphotom_merge_exposurepara.sh ${MD} STANDARD_${FILTER} \
+         OFC${SUPERFLAT}${FRINGING}  ${PHOTCAT}
 
       # filter name in PHOTCAT. It is just the first letter of
       # the complete FILTER name:
@@ -1065,9 +1135,18 @@ done
 for mode in ${MODE}
 do
   if [ "${mode}" = "RUNDISTRIBUTE" ]; then
+    # The following is necessary because the following script call expects
+    # the survey identifier KIDS for the KIDS survey. However, we provide
+    # it with version numbers such as KIDS_V0.5:  
+    REALSURVEY=`awk 'BEGIN {
+                  if ("'${SURVEY}'" ~ /KIDS/) {
+                    print "KIDS"
+                  } else {
+                    print "'${SURVEY}'"}
+                  }'`  
     ./parallel_manager.sh ./link_sets_OMEGACAM_para.sh ${MD} \
         SCIENCE_${FILTER} OFC${SUPERFLAT}${FRINGING} ${FILTER} \
-        ${SETDIR} ${SURVEY}
+        ${SETDIR} ${REALSURVEY}
   fi
 done
 
@@ -1077,47 +1156,54 @@ for mode in ${MODE}
 do
   if [[ "${mode}" =~ "CLEAN" ]]; then
     IMTYPE=`echo ${mode} | awk '{print substr($0, 6)}'`
-    if [ "${FRINGING}" = "F" ]; then
-      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/OFCS_IMAGES OMEGA OFCS.
-      test -d ${MD}/${IMTYPE}_${FILTER}/OFCS_IMAGES && \
-        rmdir ${MD}/${IMTYPE}_${FILTER}/OFCS_IMAGES
 
-      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ OMEGA OFCSF.
+    if [ "${IMTYPE}" != "CALIB" ]; then 
+      if [ "${FRINGING}" = "F" ]; then
+        ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/OFCS_IMAGES OMEGA OFCS.
+        test -d ${MD}/${IMTYPE}_${FILTER}/OFCS_IMAGES && \
+          rmdir ${MD}/${IMTYPE}_${FILTER}/OFCS_IMAGES
+  
+        ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ OMEGA OFCSF.
+      else
+        ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ OMEGA OFCS.
+      fi
+      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ "" fringe.
+      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ "" illum.
+      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ "" .
+  
+      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/OFC_IMAGES OMEGA OFC.
+        test -d ${MD}/${IMTYPE}_${FILTER}/OFC_IMAGES && \
+          rmdir ${MD}/${IMTYPE}_${FILTER}/OFC_IMAGES
+      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/SUB_IMAGES OMEGA "OFC_sub."
+        test -d ${MD}/${IMTYPE}_${FILTER}/SUB_IMAGES && \
+          rmdir ${MD}/${IMTYPE}_${FILTER}/SUB_IMAGES
+      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/SPLIT_IMAGES OMEGA "."
+        test -d ${MD}/${IMTYPE}_${FILTER}/SPLIT_IMAGES && \
+          rmdir ${MD}/${IMTYPE}_${FILTER}/SPLIT_IMAGES
+  
+      test -d ${MD}/${IMTYPE}_${FILTER}/BADMODE && \
+       rm -rf ${MD}/${IMTYPE}_${FILTER}/BADMODE
+      test -d ${MD}/${IMTYPE}_${FILTER}/cat && \
+       rm -rf ${MD}/${IMTYPE}_${FILTER}/cat
+  #    test -d ${MD}/${IMTYPE}_${FILTER}/calib && \
+  #     rm -rf ${MD}/${IMTYPE}_${FILTER}/calib
+      test -d ${MD}/${IMTYPE}_${FILTER}/cat_maskcorr && \
+       rm -rf ${MD}/${IMTYPE}_${FILTER}/cat_maskcorr
+      test -d ${MD}/${IMTYPE}_${FILTER}/reg && \
+       rm -rf ${MD}/${IMTYPE}_${FILTER}/reg
+      test -d ${MD}/${IMTYPE}_${FILTER}/STRACK && \
+       rm -rf ${MD}/${IMTYPE}_${FILTER}/STRACK
+      test -d ${MD}/${IMTYPE}_${FILTER}/BINNED && \
+       rm -rf ${MD}/${IMTYPE}_${FILTER}/BINNED
+      test -d ${MD}/${IMTYPE}_${FILTER}/headers_scamp* && \
+       rm -rf ${MD}/${IMTYPE}_${FILTER}/headers_scamp*
+      test -d ${MD}/${IMTYPE}_${FILTER}/astrom_photom_scamp* && \
+       rm -rf ${MD}/${IMTYPE}_${FILTER}/astrom_photom_scamp*
     else
-      ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ OMEGA OFCS.
+      ./cleanfiles.sh ${MD}/${FLATTYPE}_${FILTER}/ "${FLATTYPE}" .
+      ./cleanfiles.sh ${MD}/BIAS BIAS .
+      ./cleanfiles.sh ${MD}/DARK DARK .
     fi
-    ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ "" fringe.
-    ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ "" illum.
-    ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/ "" .
-
-    ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/OFC_IMAGES OMEGA OFC.
-      test -d ${MD}/${IMTYPE}_${FILTER}/OFC_IMAGES && \
-        rmdir ${MD}/${IMTYPE}_${FILTER}/OFC_IMAGES
-    ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/SUB_IMAGES OMEGA "OFC_sub."
-      test -d ${MD}/${IMTYPE}_${FILTER}/SUB_IMAGES && \
-        rmdir ${MD}/${IMTYPE}_${FILTER}/SUB_IMAGES
-    ./cleanfiles.sh ${MD}/${IMTYPE}_${FILTER}/SPLIT_IMAGES OMEGA "."
-      test -d ${MD}/${IMTYPE}_${FILTER}/SPLIT_IMAGES && \
-        rmdir ${MD}/${IMTYPE}_${FILTER}/SPLIT_IMAGES
-
-    test -d ${MD}/${IMTYPE}_${FILTER}/BADMODE && \
-     rm -rf ${MD}/${IMTYPE}_${FILTER}/BADMODE
-    test -d ${MD}/${IMTYPE}_${FILTER}/cat && \
-     rm -rf ${MD}/${IMTYPE}_${FILTER}/cat
-#    test -d ${MD}/${IMTYPE}_${FILTER}/calib && \
-#     rm -rf ${MD}/${IMTYPE}_${FILTER}/calib
-    test -d ${MD}/${IMTYPE}_${FILTER}/cat_maskcorr && \
-     rm -rf ${MD}/${IMTYPE}_${FILTER}/cat_maskcorr
-    test -d ${MD}/${IMTYPE}_${FILTER}/reg && \
-     rm -rf ${MD}/${IMTYPE}_${FILTER}/reg
-    test -d ${MD}/${IMTYPE}_${FILTER}/STRACK && \
-     rm -rf ${MD}/${IMTYPE}_${FILTER}/STRACK
-    test -d ${MD}/${IMTYPE}_${FILTER}/BINNED && \
-     rm -rf ${MD}/${IMTYPE}_${FILTER}/BINNED
-    test -d ${MD}/${IMTYPE}_${FILTER}/headers_scamp* && \
-     rm -rf ${MD}/${IMTYPE}_${FILTER}/headers_scamp*
-    test -d ${MD}/${IMTYPE}_${FILTER}/astrom_photom_scamp* && \
-     rm -rf ${MD}/${IMTYPE}_${FILTER}/astrom_photom_scamp*
   fi
 done
 

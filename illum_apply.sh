@@ -3,9 +3,13 @@
 # ----------------------------------------------------------------
 # File Name:           illum_apply.sh
 # Author:              Dominik Klaes (dklaes@astro.uni-bonn.de)
-# Last modified on:    29.04.2013
+# Last modified on:    31.05.2013
+# Version:		V1.0
 # Description:         Apply illumination correction to data
 # ----------------------------------------------------------------
+
+# Changes from V1.0 to V1.1
+# - more comments
 
 # $1  main dir
 # $2  dir to apply (e.g. SCIENCE)
