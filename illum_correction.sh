@@ -164,6 +164,9 @@ do
 
   SIGMA=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
 	  | ${P_GAWK} -f meanvar.awk | grep sigma | ${P_GAWK} '{print $3}'`
+  MEAN=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
+	  | ${P_GAWK} -f meanvar.awk | grep mean | ${P_GAWK} '{print $3}'`
+  
 
   i=1
   while [ ${i} -le ${NCHIPS} ]
