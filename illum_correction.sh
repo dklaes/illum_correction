@@ -92,6 +92,7 @@ else
                  -o ${TEMPDIR}/tmp_exp_$$.cat
 fi
 
+# Splitting up one catalogue with all chips into ${NUMCHIPS} files.
 i=1
   while [ ${i} -le ${NCHIPS} ]
   do
