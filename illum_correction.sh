@@ -78,6 +78,7 @@ done
 # Getting some information about the used camera. Checking first if ${CHIPGEOMETRY} is not empty.
 if [ "${CHIPGEOMETRY}" == "" ]; then
   theli_error "Chipgeometry not set! Check in ${INSTRUMENT}.ini if avaiable!"
+  exit 1;
 else
   ROWMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $1}'`
   COLUMNMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $2}'`
