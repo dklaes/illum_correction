@@ -112,7 +112,7 @@ done
 # Check, if for all chips are information avaiable. If not, abort.
 for CHIP in ${NUMCHIPS}
 do
-  if [ -a "${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat" ]; then
+  if [ -e "${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat" ]; then
     NUMBER=`${P_LDACDESC} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat | grep elements | ${P_GAWK} -F . '{print $1}'`
     if [ ${NUMBER} -le 0 ]; then
       theli_error "Not enough objects avaiable for fitting. Chip ${CHIP} caused the first problem!"
@@ -124,7 +124,7 @@ do
   fi
 done
 
-if [ ! -a "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc" ]; then
+if [ ! -e "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc" ]; then
   theli_error "No photometric calibration file avaiable! Check 'night_${NIGHT}_${FILTERNAME}_result.asc'!"
   exit 1;
 fi
