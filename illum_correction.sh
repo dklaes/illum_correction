@@ -161,7 +161,7 @@ do
     ${P_LDACFILTER} -i ${TEMPDIR}/chip_${i}_merg_corr2.cat_$$ \
 	    -o ${TEMPDIR}/chip_${i}_merg_corr.cat_$$ -t PSSC \
 	    -c "((Residual<${SIGMA})AND(Residual>-${SIGMA}));"
-    # Extracting all needed inforamtion into a CSV file (night based)
+    # Extracting all needed information into a CSV file (night based)
     ${P_LDACTOASC} -b -i ${TEMPDIR}/chip_${i}_merg_corr.cat_$$ -t PSSC \
 	    -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID Residual Xpos_mod \
 	    Ypos_mod AIRMASS Xpos_global Ypos_global MagZP >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
@@ -193,7 +193,7 @@ do
     ${P_LDACCALC} -i ${TEMPDIR}/chip_${i}_merg_fitted1.cat_$$ -o ${TEMPDIR}/chip_${i}_merg_fitted.cat_$$ -t PSSC \
       -c "(Mag_fitted-${FILTER}mag);" -n Residual_fitted "" -k FLOAT
     
-    # Extracting all needed inforamtion into a CSV file (night based)
+    # Extracting all needed information into a CSV file (night based)
     ${P_LDACTOASC} -b -i ${TEMPDIR}/chip_${i}_merg_fitted.cat_$$ -t PSSC -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID \
       Residual Xpos_mod Ypos_mod Mag_fitted Residual_fitted AIRMASS Xpos_global Ypos_global MagZP >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
     mv ${TEMPDIR}/chip_${i}_merg_fitted.cat_$$ ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_fitted.cat &
