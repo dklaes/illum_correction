@@ -189,7 +189,7 @@ def plot(arg):
     appearance('','Residual','', '','', 'grid', 'nocamgrid', ax1, 'sub')
 
     ax2 = fig.add_subplot(2, 1, 2)
-    ax2.plot(d[:,14],d[:,10],'k,')
+    ax2.plot(d[:,9],d[:,10],'k,')
     appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax2, 'sub')
     
     lab.savefig(path + 'mag_dependency.png')
