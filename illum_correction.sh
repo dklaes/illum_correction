@@ -49,6 +49,7 @@ if [ $# -ne 7 ]; then
   exit 1;
 fi
 
+# Checking which runmode shall be used. See also information for $7 above.
 REDDIR=`pwd`
 cd /${MAIND}/${STANDARDD}/calib/
 if [ "$7" == "RUNCALIB" ]; then
