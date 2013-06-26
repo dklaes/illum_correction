@@ -82,10 +82,15 @@ PIXY=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $4}'`
 PIXXMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $1*$3}'`
 PIXYMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $2*$4}'`
 
-
+# Getting all cats into one catalogue (modification needed to update from reduce_KIDS_1.7.2 to 1.7.6)
+# and checking if they are avaiable.
 CATS=`find /${MAIND}/${STANDARDD}/cat/ -name \*all_photprep_merg.cat`
-${P_LDACPASTE} -i ${CATS} -t PSSC\
-               -o ${TEMPDIR}/tmp_exp_$$.cat
+if [ "${CATS}" == "" ]; then
+  theli_error "No standard catalogue matched catalogues avaiable!"
+else
+  ${P_LDACPASTE} -i ${CATS} -t PSSC\
+                 -o ${TEMPDIR}/tmp_exp_$$.cat
+fi
 
 i=1
   while [ ${i} -le ${NCHIPS} ]
