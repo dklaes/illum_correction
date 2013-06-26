@@ -122,6 +122,10 @@ do
   fi
 done
 
+if [ ! -a "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc" ]; then
+  theli_error "No photometric calibration file avaiable! Check 'night_${NIGHT}_${FILTERNAME}_result.asc'!"
+  exit 1;
+fi
 
 
 # Now extract all needed information from the chip-based catalogues. 
