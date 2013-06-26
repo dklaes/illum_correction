@@ -92,6 +92,7 @@ fi
 CATS=`find /${MAIND}/${STANDARDD}/cat/ -name \*all_photprep_merg.cat`
 if [ "${CATS}" == "" ]; then
   theli_error "No standard catalogue matched catalogues avaiable!"
+  exit 1;
 else
   ${P_LDACPASTE} -i ${CATS} -t PSSC\
                  -o ${TEMPDIR}/tmp_exp_$$.cat
