@@ -174,7 +174,7 @@ do
     # Filtering only those residuals which lies in certain given limits.
     ${P_LDACFILTER} -i ${TEMPDIR}/chip_${i}_merg_corr2.cat_$$ \
 	    -o ${TEMPDIR}/chip_${i}_merg_corr.cat_$$ -t PSSC \
-	    -c "((Residual<${SIGMA})AND(Residual>-${SIGMA}));"
+	    -c "((Residual<${MEAN}+${SIGMA})AND(Residual>${MEAN}-${SIGMA}));"
     # Extracting all needed information into a CSV file (night based)
     ${P_LDACTOASC} -b -i ${TEMPDIR}/chip_${i}_merg_corr.cat_$$ -t PSSC \
 	    -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID Residual Xpos_mod \
