@@ -96,6 +96,23 @@ i=1
   i=$(( $i + 1 ))
 done
 
+# Check, if for all chips are information avaiable. If not, abort.
+for CHIP in ${NUMCHIPS}
+do
+  if [ -a "${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat" ]; then
+    NUMBER=`${P_LDACDESC} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat | grep elements | ${P_GAWK} -F . '{print $1}'`
+    if [ ${NUMBER} -le 0 ]; then
+      theli_error "Not enough objects avaiable for fitting. Chip ${CHIP} caused the first problem!"
+      exit 1;
+    fi
+  else
+    theli_error "No information for all chips avaiable. Chip ${CHIP} caused the first problem!"
+    exit 1;
+  fi
+done
+
+
+
 # Now extract all needed information from the chip-based catalogues. 
 # Please make sure that you have already modified stdphotom_prepare_make_ssc.conf 
 # containing Xpos and Ypos (normally from input catalogue 0)!
