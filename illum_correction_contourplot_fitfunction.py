@@ -280,26 +280,28 @@ def plot(arg):
     fig = plt.figure()
     BIN = int((abs(LRL)+abs(URL))/0.01/2.0)+3
 
-    # 1
-    ax1 = fig.add_subplot(2, 2, 1)
-    ax1.hist(d[:,6],bins=BIN, range=(LRL,URL))
-    appearance('Residual','Number of objects','Before fitting', [LRL, URL], ax2.set_ylim(), 'grid', 'nocamgrid', ax1, 'sub')
-    
+    # Optimized so that y ranges (number of objects) are the same in both plots, the second one has, due to fitting
+    # a higher number so we have to take this (automatically) set (y) limits.
     # 2
     ax2 = fig.add_subplot(2, 2, 2)
     ax2.hist(d[:,10],bins=BIN, range=(LRL,URL))
     appearance('Residual','','After fitting', [LRL, URL], '', 'grid', 'nocamgrid', ax2, 'sub')
-
-    # 3
-    ax3 = fig.add_subplot(2, 2, 3)
-    ax3.hist(d[:,6],bins=41, range=(-0.105, 0.105))
-    appearance('Residual','Number of objects','', [-0.1,0.1], ax4.set_ylim(), 'grid', 'nocamgrid', ax3, 'sub')
+    
+    # 1
+    ax1 = fig.add_subplot(2, 2, 1)
+    ax1.hist(d[:,6],bins=BIN, range=(LRL,URL))
+    appearance('Residual','Number of objects','Before fitting', [LRL, URL], ax2.set_ylim(), 'grid', 'nocamgrid', ax1, 'sub')
     
     # 4
     ax4 = fig.add_subplot(2, 2, 4)
     ax4.hist(d[:,10],bins=41, range=(-0.105, 0.105))
     appearance('Residual','','', [-0.1,0.1], '', 'grid', 'nocamgrid', ax4, 'sub')
 
+    # 3
+    ax3 = fig.add_subplot(2, 2, 3)
+    ax3.hist(d[:,6],bins=41, range=(-0.105, 0.105))
+    appearance('Residual','Number of objects','', [-0.1,0.1], ax4.set_ylim(), 'grid', 'nocamgrid', ax3, 'sub')
+    
     lab.savefig(path + 'histograms.png')
     
   elif (arg == 'contour'):
