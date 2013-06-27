@@ -96,14 +96,21 @@ if [ "${CATS}" == "" ]; then
   exit 1;
 else
   ${P_LDACPASTE} -i ${CATS} -t PSSC\
-                 -o ${TEMPDIR}/tmp_exp_$$.cat
+                 -o ${TEMPDIR}/tmp_exp.cat_$$
 fi
+
+# Doing some filtering process which is the same for all chips and nights already here
+# (for performance reasons).
+# Filtering only those detected source with a mag in a certain filter less 99mag
+${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat_$$ \
+		  -o ${TEMPDIR}/tmp_exp.cat2_$$ \
+		  -t PSSC -c "(${FILTER}mag<99);"
 
 # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
 i=1
   while [ ${i} -le ${NCHIPS} ]
   do
-	${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp_$$.cat -t PSSC \
+	${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat2_$$ -t PSSC \
 			-o ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
 			-c "(CHIP=${i});"
   i=$(( $i + 1 ))
@@ -142,10 +149,6 @@ do
   i=1
   while [ ${i} -le ${NCHIPS} ]
   do
-    # Filtering only those detected source with a mag in a certain filter less 99mag
-    ${P_LDACFILTER} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
-    -o ${TEMPDIR}/chip_${i}_merg_corr0.cat_$$ \
-	    -t PSSC -c "(${FILTER}mag<99);"
     # Calculating the residual with the ZP from the fit done by the THELI pipeline.
     # It's residual = detected magnitude + zeropoint - reference and
     # coordinate transformation for coordinate between -1.0 and 1.0
