@@ -136,10 +136,15 @@ do
   # the residual with the ZP from the fit done by the THELI pipeline.
   # It's residual = detected magnitude + zeropoint - reference and
   # coordinate transformation for coordinate between -1.0 and 1.0
-  ${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat2_$$ \
-                  -o ${TEMPDIR}/tmp_exp.cat3_$$ \
-                  -t PSSC \
-                  -c "(GABODSID=${NIGHT});"
+  if [ "${MODE}" == "RUNCALIB" ]; then
+    cp ${TEMPDIR}/tmp_exp.cat2_$$ ${TEMPDIR}/tmp_exp.cat3_$$
+  else
+    ${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat2_$$ \
+		    -o ${TEMPDIR}/tmp_exp.cat3_$$ \
+		    -t PSSC \
+		    -c "(GABODSID=${NIGHT});"
+  fi
+
   ${P_LDACCALC} -i ${TEMPDIR}/tmp_exp.cat3_$$ \
                 -o ${TEMPDIR}/tmp_exp.cat4_$$ -t PSSC \
                 -c "(Mag+${ZP}+${EXT}*AIRMASS);" -n MagZP "" -k FLOAT
