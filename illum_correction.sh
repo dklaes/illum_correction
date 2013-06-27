@@ -9,14 +9,15 @@
 # ----------------------------------------------------------------
 
 
-# $1  main dir
-# $2  standard dir
-# $3  filter as used in file names (e.g. r_SDSS)
-# $4  Solution (row) number from calib/....asc
-# $5  extension of images
-# $6  filter as used in files (e.g. R instead of r_SDSS)
-# $7  operation mode ("RUNCALIB" for illum correction for the entire 
-#     run or "NIGHTCALIB" for illum correction for every night)
+# $1		main dir
+# $2		standard dir
+# $3		filter as used in file names (e.g. r_SDSS)
+# $4		Solution (row) number from calib/....asc
+# $5		extension of images
+# $6		filter as used in files (e.g. R instead of r_SDSS)
+# $7  		operation mode ("RUNCALIB" for illum correction for the entire 
+#     		run or "NIGHTCALIB" for illum correction for every night)
+# MINOBJECTS	Minimal number of objects that are required for fitting
 
 
 # Changes from V1.1 to V1.2
@@ -35,6 +36,7 @@ SOLUTION=$4
 EXTENSION=$5
 FILTER=$6
 MODE=$7
+MINOBJECTS=0
 
 # including some important files
 . ${INSTRUMENT:?}.ini
@@ -121,7 +123,7 @@ for CHIP in ${NUMCHIPS}
 do
   if [ -e "${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat" ]; then
     NUMBER=`${P_LDACDESC} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat | grep elements | ${P_GAWK} -F . '{print $1}'`
-    if [ ${NUMBER} -le 0 ]; then
+    if [ ${NUMBER} -le ${MINOBJECTS} ]; then
       theli_error "Not enough objects avaiable for fitting. Chip ${CHIP} caused the first problem!"
       exit 1;
     fi
