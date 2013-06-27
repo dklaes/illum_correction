@@ -18,7 +18,8 @@
 # $7  		operation mode ("RUNCALIB" for illum correction for the entire 
 #     		run or "NIGHTCALIB" for illum correction for every night)
 # MINOBJECTS	Minimal number of objects that are required for fitting
-
+# LOWERTHROW	The lower part of the data is thrown away right in the beginning (given in percent)
+# UPPERTHROW	The upper part of the data is thrown away right in the beginning (given in percent)
 
 # Changes from V1.1 to V1.2
 # - included _$$ to temporary files
@@ -37,6 +38,8 @@ EXTENSION=$5
 FILTER=$6
 MODE=$7
 MINOBJECTS=0
+LOWERTHROW=0.1
+UPPERTHROW=0.1
 
 # including some important files
 . ${INSTRUMENT:?}.ini
@@ -149,10 +152,25 @@ do
                 -o ${TEMPDIR}/tmp_exp.cat4_$$ -t PSSC \
                 -c "(Mag+${ZP}+${EXT}*AIRMASS);" -n MagZP "" -k FLOAT
   ${P_LDACCALC} -i ${TEMPDIR}/tmp_exp.cat4_$$ \
-                -o ${MAIND}/${STANDARDD}/cat/chip_all_merg.cat -t PSSC \
+                -o ${TEMPDIR}/tmp_exp.cat5_$$ -t PSSC \
                 -c "(MagZP-${FILTER}mag);" -n Residual "" -k FLOAT \
                 -c "((2.0*Xpos_global)/${PIXXMAX});" -n Xpos_mod "" -k FLOAT \
                 -c "((2.0*Ypos_global)/${PIXYMAX});" -n Ypos_mod "" -k FLOAT
+
+  # Throw away the upper and lower e.g. 10 percent (controlled via ${UPPERTHROW}
+  # and ${LOWERTHROW})
+  NUMBERUPPER=`${P_LDACTOASC} -b -i tmp_exp.cat5_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${UPPERTHROW}'}'`
+  NUMBERLOWER=`${P_LDACTOASC} -b -i tmp_exp.cat5_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${LOWERTHROW}'}'`
+  LOWERVALUE=`${P_LDACTOASC} -b -i tmp_exp.cat5_$$ -t PSSC -k Residual | sort -g | ${P_GAWK} 'NR=='${NUMBERLOWER}' {print $0}'`
+  HIGHERVALUE=`${P_LDACTOASC} -b -i tmp_exp.cat5_$$ -t PSSC -k Residual | sort -rg | ${P_GAWK} 'NR=='${NUMBERUPPER}' {print $0}'`
+  echo "NUMUP: ${NUMBERUPPER}"
+  echo "NUMLOW: ${NUMBERLOWER}"
+  echo "LOWVAL: ${LOWERVALUE}"
+  echo "HIGHVAL: ${HIGHERVALUE}"
+
+  ${P_LDACFILTER} -i tmp_exp.cat5_$$ -t PSSC \
+		  -o ${MAIND}/${STANDARDD}/cat/chip_all_merg.cat \
+		  -c "((Residual<${HIGHERVALUE})AND(Residual>${LOWERVALUE}));"
 
   # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
   i=1
@@ -196,7 +214,7 @@ do
     # Filtering only those residuals which lies in certain given limits.
     ${P_LDACFILTER} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
 	    -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_corr.cat -t PSSC \
-	    -c "((Residual<${MEAN}+${SIGMA})AND(Residual>${MEAN}-${SIGMA}));"
+	    -c "((Residual<${MEAN}+3*${SIGMA})AND(Residual>${MEAN}-3*${SIGMA}));"
     # Extracting all needed information into a CSV file (night based)
     ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_corr.cat -t PSSC \
 	    -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID Residual Xpos_mod \
