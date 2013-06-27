@@ -108,31 +108,14 @@ ${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat_$$ \
 		  -o ${TEMPDIR}/tmp_exp.cat2_$$ \
 		  -t PSSC -c "(${FILTER}mag<99);"
 
-# Splitting up one catalogue with all chips into ${NUMCHIPS} files.
-i=1
-  while [ ${i} -le ${NCHIPS} ]
-  do
-	${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat2_$$ -t PSSC \
-			-o ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
-			-c "(CHIP=${i});"
-  i=$(( $i + 1 ))
-done
+# Checking if we have still objects at all.
+if [ ! -e "${TEMPDIR}/tmp_exp.cat2_$$" ]; then
+  theli_error "No objects left after ${FILTER}mag<99 filtering!"
+  exit 1;
+fi
 
-# Check, if for all chips are information avaiable. If not, abort.
-for CHIP in ${NUMCHIPS}
-do
-  if [ -e "${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat" ]; then
-    NUMBER=`${P_LDACDESC} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat | grep elements | ${P_GAWK} -F . '{print $1}'`
-    if [ ${NUMBER} -le ${MINOBJECTS} ]; then
-      theli_error "Not enough objects avaiable for fitting. Chip ${CHIP} caused the first problem!"
-      exit 1;
-    fi
-  else
-    theli_error "No information for all chips avaiable. Chip ${CHIP} caused the first problem!"
-    exit 1;
-  fi
-done
 
+# Checking if photometric calibration file is avaiable.
 if [ ! -e "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc" ]; then
   theli_error "No photometric calibration file avaiable! Check 'night_${NIGHT}_${FILTERNAME}_result.asc'!"
   exit 1;
@@ -148,24 +131,53 @@ do
   # Getting the zeropoint with the given solution number line
   ZP=`${P_GAWK} 'NR == '${SOLUTION}' {print $1}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
   EXT=`${P_GAWK} 'NR == '${SOLUTION}' {print $2}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
+
+  # First filtering for objects of this specific night. Then calculate
+  # the residual with the ZP from the fit done by the THELI pipeline.
+  # It's residual = detected magnitude + zeropoint - reference and
+  # coordinate transformation for coordinate between -1.0 and 1.0
+  ${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat2_$$ \
+                  -o ${TEMPDIR}/tmp_exp.cat3_$$ \
+                  -t PSSC \
+                  -c "(GABODSID=${NIGHT});"
+  ${P_LDACCALC} -i ${TEMPDIR}/tmp_exp.cat3_$$ \
+                -o ${TEMPDIR}/tmp_exp.cat4_$$ -t PSSC \
+                -c "(Mag+${ZP}+${EXT}*AIRMASS);" -n MagZP "" -k FLOAT
+  ${P_LDACCALC} -i ${TEMPDIR}/tmp_exp.cat4_$$ \
+                -o ${MAIND}/${STANDARDD}/cat/chip_all_merg.cat -t PSSC \
+                -c "(MagZP-${FILTER}mag);" -n Residual "" -k FLOAT \
+                -c "((2.0*Xpos_global)/${PIXXMAX});" -n Xpos_mod "" -k FLOAT \
+                -c "((2.0*Ypos_global)/${PIXYMAX});" -n Ypos_mod "" -k FLOAT
+
+  # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
   i=1
   while [ ${i} -le ${NCHIPS} ]
   do
-    # Calculating the residual with the ZP from the fit done by the THELI pipeline.
-    # It's residual = detected magnitude + zeropoint - reference and
-    # coordinate transformation for coordinate between -1.0 and 1.0
-    ${P_LDACCALC} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
-	    -o ${TEMPDIR}/chip_${i}_merg_corr1.cat_$$ -t PSSC \
-	    -c "(Mag+${ZP}+${EXT}*AIRMASS);" -n MagZP "" -k FLOAT
-    ${P_LDACCALC} -i ${TEMPDIR}/chip_${i}_merg_corr1.cat_$$ \
-	    -o ${TEMPDIR}/chip_${i}_merg_corr2.cat_$$ -t PSSC \
-	    -c "(MagZP-${FILTER}mag);" -n Residual "" -k FLOAT \
-	    -c "((2.0*Xpos_global)/${PIXXMAX});" -n Xpos_mod "" -k FLOAT \
-	    -c "((2.0*Ypos_global)/${PIXYMAX});" -n Ypos_mod "" -k FLOAT
-    ${P_LDACTOASC} -b -i ${TEMPDIR}/chip_${i}_merg_corr2.cat_$$ -t PSSC \
-	    -k Residual >> ${TEMPDIR}/res_${NIGHT}.csv_$$
+    ${P_LDACFILTER} -i ${MAIND}/${STANDARDD}/cat/chip_all_merg.cat -t PSSC \
+                    -o ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
+                    -c "(CHIP=${i});"
     i=$(( $i + 1 ))
   done
+
+  # Check, if for all chips are enough information avaiable. If not, abort.
+  i=1
+  while [ ${i} -le ${NCHIPS} ]
+  do
+    if [ -e "${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat" ]; then
+      NUMBER=`${P_LDACTOASC} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat -t PSSC -k MagZP | wc -l`
+      if [ ${NUMBER} -le ${MINOBJECTS} ]; then
+	theli_error "Not enough objects avaiable for fitting. Chip ${CHIP} caused the first problem!"
+	exit 1;
+      fi
+    else
+      theli_error "No information for at least one chip avaiable. Chip ${CHIP} caused the first problem!"
+      exit 1;
+    fi
+    i=$(( $i + 1 ))
+  done
+
+  ${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_exp.cat5_$$ -t PSSC \
+                 -k Residual >> ${TEMPDIR}/res_${NIGHT}.csv_$$
 
   SIGMA=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
 	  | ${P_GAWK} -f meanvar.awk | grep sigma | ${P_GAWK} '{print $3}'`
@@ -177,14 +189,13 @@ do
   while [ ${i} -le ${NCHIPS} ]
   do
     # Filtering only those residuals which lies in certain given limits.
-    ${P_LDACFILTER} -i ${TEMPDIR}/chip_${i}_merg_corr2.cat_$$ \
-	    -o ${TEMPDIR}/chip_${i}_merg_corr.cat_$$ -t PSSC \
+    ${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat5_$$ \
+	    -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_corr.cat -t PSSC \
 	    -c "((Residual<${MEAN}+${SIGMA})AND(Residual>${MEAN}-${SIGMA}));"
     # Extracting all needed information into a CSV file (night based)
-    ${P_LDACTOASC} -b -i ${TEMPDIR}/chip_${i}_merg_corr.cat_$$ -t PSSC \
+    ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_corr.cat -t PSSC \
 	    -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID Residual Xpos_mod \
 	    Ypos_mod AIRMASS Xpos_global Ypos_global MagZP >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
-    mv ${TEMPDIR}/chip_${i}_merg_corr.cat_$$ ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_corr.cat &
     i=$(( $i + 1 ))
   done
 
