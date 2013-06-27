@@ -152,7 +152,7 @@ do
     # Calculating the residual with the ZP from the fit done by the THELI pipeline.
     # It's residual = detected magnitude + zeropoint - reference and
     # coordinate transformation for coordinate between -1.0 and 1.0
-    ${P_LDACCALC} -i ${TEMPDIR}/chip_${i}_merg_corr0.cat_$$ \
+    ${P_LDACCALC} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
 	    -o ${TEMPDIR}/chip_${i}_merg_corr1.cat_$$ -t PSSC \
 	    -c "(Mag+${ZP}+${EXT}*AIRMASS);" -n MagZP "" -k FLOAT
     ${P_LDACCALC} -i ${TEMPDIR}/chip_${i}_merg_corr1.cat_$$ \
