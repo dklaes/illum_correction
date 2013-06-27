@@ -181,7 +181,7 @@ do
     i=$(( $i + 1 ))
   done
 
-  ${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_exp.cat5_$$ -t PSSC \
+  ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/cat/chip_all_merg.cat -t PSSC \
                  -k Residual >> ${TEMPDIR}/res_${NIGHT}.csv_$$
 
   SIGMA=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
@@ -194,7 +194,7 @@ do
   while [ ${i} -le ${NCHIPS} ]
   do
     # Filtering only those residuals which lies in certain given limits.
-    ${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat5_$$ \
+    ${P_LDACFILTER} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
 	    -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_corr.cat -t PSSC \
 	    -c "((Residual<${MEAN}+${SIGMA})AND(Residual>${MEAN}-${SIGMA}));"
     # Extracting all needed information into a CSV file (night based)
