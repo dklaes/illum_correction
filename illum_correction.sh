@@ -9,17 +9,26 @@
 # ----------------------------------------------------------------
 
 
-# $1		main dir
-# $2		standard dir
-# $3		filter as used in file names (e.g. r_SDSS)
-# $4		Solution (row) number from calib/....asc
-# $5		extension of images
-# $6		filter as used in files (e.g. R instead of r_SDSS)
-# $7  		operation mode ("RUNCALIB" for illum correction for the entire 
-#     		run or "NIGHTCALIB" for illum correction for every night)
-# MINOBJECTS	Minimal number of objects that are required for fitting
-# LOWERTHROW	The lower part of the data is thrown away right in the beginning (given in percent)
-# UPPERTHROW	The upper part of the data is thrown away right in the beginning (given in percent)
+# $1			main dir
+# $2			standard dir
+# $3			filter as used in file names (e.g. r_SDSS)
+# $4			Solution (row) number from calib/....asc
+# $5			extension of images
+# $6			filter as used in files (e.g. R instead of r_SDSS)
+# $7  			operation mode ("RUNCALIB" for illum correction for the entire
+#     			run or "NIGHTCALIB" for illum correction for every night)
+#
+# MINOBJECTS		Minimal number of objects that are required for fitting
+# CUTS			Array containing cut types and order
+#			At the moment: PERCENT, RES, MAG and SIGMA
+# LOWERCUTPERCENT	The lower part of the data is thrown away right in the beginning (given in percent)
+# UPPERCUTPERCENT	The upper part of the data is thrown away right in the beginning (given in percent)
+# LOWERCUTRESABS	Residuals with smaller residuals than this value will be cutted
+# UPPERCUTRESABS	Residuals with larger residuals than this value will be cutted
+# LOWERCUTMAG		Minimal magnitude being considered
+# UPPERCUTMAG		Maximal magnitude being considered
+# SIGMAWIDTH		How many sigmas shall be taken?
+# + CUTRESABS with respect to MEAN
 
 # Changes from V1.1 to V1.2
 # - included _$$ to temporary files
@@ -37,9 +46,17 @@ SOLUTION=$4
 EXTENSION=$5
 FILTER=$6
 MODE=$7
+
 MINOBJECTS=0
-LOWERTHROW=0.1
-UPPERTHROW=0.1
+CUTS="MAG RES PERCENT SIGMA"
+LOWERCUTPERCENT=0.1	#percent
+UPPERCUTPERCENT=0.1	#percent
+LOWERCUTRESABS=-0.2	#mag
+UPPERCUTRESABS=0.2	#mag
+LOWERCUTMAG=10		#mag
+UPPERCUTMAG=25		#mag
+SIGMAWIDTH=3
+
 
 # including some important files
 . ${INSTRUMENT:?}.ini
@@ -157,37 +174,73 @@ do
                 -c "((2.0*Xpos_global)/${PIXXMAX});" -n Xpos_mod "" -k FLOAT \
                 -c "((2.0*Ypos_global)/${PIXYMAX});" -n Ypos_mod "" -k FLOAT
 
-  # Throw away the upper and lower e.g. 10 percent (controlled via ${UPPERTHROW}
-  # and ${LOWERTHROW})
-  NUMBERUPPER=`${P_LDACTOASC} -b -i tmp_exp.cat5_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${UPPERTHROW}'}'`
-  NUMBERLOWER=`${P_LDACTOASC} -b -i tmp_exp.cat5_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${LOWERTHROW}'}'`
-  LOWERVALUE=`${P_LDACTOASC} -b -i tmp_exp.cat5_$$ -t PSSC -k Residual | sort -g | ${P_GAWK} 'NR=='${NUMBERLOWER}' {print $0}'`
-  HIGHERVALUE=`${P_LDACTOASC} -b -i tmp_exp.cat5_$$ -t PSSC -k Residual | sort -rg | ${P_GAWK} 'NR=='${NUMBERUPPER}' {print $0}'`
-  echo "NUMUP: ${NUMBERUPPER}"
-  echo "NUMLOW: ${NUMBERLOWER}"
-  echo "LOWVAL: ${LOWERVALUE}"
-  echo "HIGHVAL: ${HIGHERVALUE}"
 
-  ${P_LDACFILTER} -i tmp_exp.cat5_$$ -t PSSC \
-		  -o ${MAIND}/${STANDARDD}/cat/chip_all_merg.cat \
-		  -c "((Residual<${HIGHERVALUE})AND(Residual>${LOWERVALUE}));"
-
-  # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
-  i=1
-  while [ ${i} -le ${NCHIPS} ]
+  # Now filtering according to given methods and values:
+  i=0
+  cp ${TEMPDIR}/tmp_exp.cat5_$$ ${TEMPDIR}/tmp_filter.cat${i}_$$
+  for METHOD in ${CUTS}
   do
-    ${P_LDACFILTER} -i ${MAIND}/${STANDARDD}/cat/chip_all_merg.cat -t PSSC \
-                    -o ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
-                    -c "(CHIP=${i});"
     i=$(( $i + 1 ))
+    if [ "${METHOD}" == "PERCENT" ]; then
+      # Throw away the upper and lower e.g. 10 percent (controlled via ${UPPERCUTPERCENT}
+      # and ${LOWERCUTPERCENT}).
+      NUMBERUPPER=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${UPPERCUTPERCENT}'}'`
+      NUMBERLOWER=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${LOWERCUTPERCENT}'}'`
+      LOWERVALUE=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | sort -g | ${P_GAWK} 'NR=='${NUMBERLOWER}' {print $0}'`
+      HIGHERVALUE=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | sort -rg | ${P_GAWK} 'NR=='${NUMBERUPPER}' {print $0}'`
+      echo "NUMUP: ${NUMBERUPPER}"
+      echo "NUMLOW: ${NUMBERLOWER}"
+      echo "LOWVAL: ${LOWERVALUE}"
+      echo "HIGHVAL: ${HIGHERVALUE}"
+
+      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+		      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
+		      -c "((Residual<${HIGHERVALUE})AND(Residual>${LOWERVALUE}));"
+
+
+    elif [ "${METHOD}" == "RES" ]; then
+      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
+                      -c "((Residual>${LOWERCUTRESABS})AND(Residual<${UPPERCUTRESABS}));"
+
+
+    elif [ "${METHOD}" == "MAG" ]; then
+      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
+                      -c "((MagZP>${LOWERCUTMAG})AND(MagZP<${UPPERCUTMAG}));"
+
+
+    elif [ "${METHOD}" == "SIGMA" ]; then
+      ${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                     -k Residual >> ${TEMPDIR}/res_${NIGHT}.csv_$$
+
+      SIGMA=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
+	      | ${P_GAWK} -f meanvar.awk | grep sigma | ${P_GAWK} '{print $3}'`
+      MEAN=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
+	      | ${P_GAWK} -f meanvar.awk | grep mean | ${P_GAWK} '{print $3}'`
+
+      # Filtering only those residuals which lies in certain given limits.
+      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ \
+                      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
+                      -c "((Residual<${MEAN}+${SIGMAWIDTH}*${SIGMA})AND(Residual>${MEAN}-${SIGMAWIDTH}*${SIGMA}));" \
+                      -t PSSC
+    fi
   done
 
-  # Check, if for all chips are enough information avaiable. If not, abort.
+  cp ${TEMPDIR}/tmp_filter.cat${i}_$$ ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat
+
+  # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
+  # Check, if for all chips enough objects are avaiable. If not, abort.
+  # Extracting all needed information into a CSV file (night based)
   i=1
   while [ ${i} -le ${NCHIPS} ]
   do
-    if [ -e "${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat" ]; then
-      NUMBER=`${P_LDACTOASC} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat -t PSSC -k MagZP | wc -l`
+    ${P_LDACFILTER} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat -t PSSC \
+                    -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat \
+                    -c "(CHIP=${i});"
+    
+    if [ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat" ]; then
+      NUMBER=`${P_LDACTOASC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC -k MagZP | wc -l`
       if [ ${NUMBER} -le ${MINOBJECTS} ]; then
 	theli_error "Not enough objects avaiable for fitting. Chip ${CHIP} caused the first problem!"
 	exit 1;
@@ -196,31 +249,13 @@ do
       theli_error "No information for at least one chip avaiable. Chip ${CHIP} caused the first problem!"
       exit 1;
     fi
-    i=$(( $i + 1 ))
-  done
 
-  ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/cat/chip_all_merg.cat -t PSSC \
-                 -k Residual >> ${TEMPDIR}/res_${NIGHT}.csv_$$
-
-  SIGMA=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
-	  | ${P_GAWK} -f meanvar.awk | grep sigma | ${P_GAWK} '{print $3}'`
-  MEAN=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
-	  | ${P_GAWK} -f meanvar.awk | grep mean | ${P_GAWK} '{print $3}'`
-  
-
-  i=1
-  while [ ${i} -le ${NCHIPS} ]
-  do
-    # Filtering only those residuals which lies in certain given limits.
-    ${P_LDACFILTER} -i ${MAIND}/${STANDARDD}/cat/chip_${i}_merg.cat \
-	    -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_corr.cat -t PSSC \
-	    -c "((Residual<${MEAN}+3*${SIGMA})AND(Residual>${MEAN}-3*${SIGMA}));"
-    # Extracting all needed information into a CSV file (night based)
-    ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_merg_corr.cat -t PSSC \
+    ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC \
 	    -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID Residual Xpos_mod \
 	    Ypos_mod AIRMASS Xpos_global Ypos_global MagZP >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
     i=$(( $i + 1 ))
   done
+
 
   # Fitting the data
   ./illum_correction_fit.py ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/
