@@ -275,7 +275,7 @@ do
     FCHIP=`grep -m1 F${i} ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat | ${P_GAWK} '{print $3}'`
     
     # Calculating the fitted magnitude for each object and the fitted residuals.
-    ${P_LDACCALC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -o ${TEMPDIR}/chip_${i}_filtered_fitted.cat1_$$ -t PSSC \
+    ${P_LDACCALC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -o ${TEMPDIR}/chip_${i}_filtered_fitted.cat1_$$ -t PSSC \
       -c "(MagZP-${A}*(Xpos_mod*Xpos_mod)-${B}*(Ypos_mod*Ypos_mod)-${C}*(Xpos_mod*Ypos_mod)-${D}*Xpos_mod-${E}*Ypos_mod-${FCHIP});" \
       -n Mag_fitted "" -k FLOAT
     ${P_LDACCALC} -i ${TEMPDIR}/chip_${i}_filtered_fitted.cat1_$$ -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered_fitted.cat -t PSSC \
