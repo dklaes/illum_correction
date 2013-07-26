@@ -222,6 +222,10 @@ do
        FLATBASEDIR=${2}
        shift 2
        ;;
+   -id)
+       ILLUMDIR=${2}
+       shift 2
+       ;;
    -m)
        MODE=${2}
        shift 2
@@ -342,8 +346,8 @@ export MAGMIN=-100  # dummy for the automatic absolute photometric
 export MAGMAX=100   #      "
 
 #PHOTCAT=`pwd`/STRIPE82.cat
-#PHOTCAT=`pwd`/../catalogues/KiDS_from_SDSS_cut.cat
-PHOTCAT=`pwd`/../catalogues/thomas_KIDS_SLOAN.cat
+PHOTCAT=`pwd`/../catalogues/thomas_catalogs/thomas_KIDS_SLOAN_0.0002_zerr_smaller_0.05.cat
+#PHOTCAT=`pwd`/../catalogues/STRIPE82.cat
 #PHOTCAT=/export/euclid2_1/terben/reduce_KIDS/SLOAN_KIDS_standards.cat
 # default values for color index, extinction coefficient
 # and color term (absolute photometry) in the different
@@ -1249,7 +1253,8 @@ do
 		2 OFC${SUPERFLAT}${FRINGING} ${FILTNAMSTAND} RUNCALIB
     else
 	./illum_apply.sh ${MD} ${IMTYPE}_${FILTER} STANDARD_${FILTER} \
-		${FILTER} OFC${SUPERFLAT}${FRINGING} RUNCALIB ${NPROC}
+		${FILTER} OFC${SUPERFLAT}${FRINGING} RUNCALIB ${NPROC} \
+                ${ILLUMDIR}
     fi
   fi
 done
