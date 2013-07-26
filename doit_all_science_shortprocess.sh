@@ -38,7 +38,21 @@ export THELI_LOGLEVEL
   -scb ${SD}/${SURVEY}/${FILT} -stb ${SD}/${SURVEY}/${FILT} -sd ${SD}/${SURVEY}/
 
 ./doall_run_OMEGACAM_single.sh -b ${MD}/ \
-  -s ${SURVEY} -m "SCIENCE GLOBALWEIGHTS TESTREG WEIGHTSSCIENCE CROSSTALKWEIGHTS" \
+  -s ${SURVEY} -m "SCIENCE GLOBALWEIGHTS" \
+  -f ${FILT} -r ${RUN} -t SKYFLAT -www ${WWWDIR}/ \
+  -bb ${SD}/${SURVEY}/BIAS -db ${SD}/${SURVEY}/DARK \
+  -fb ${SD}/${SURVEY}/${FILT} \
+  -sd ${SD}/${SURVEY}/
+
+./doall_run_OMEGACAM_single.sh -b ${MD}/ \
+  -s ${SURVEY} -m "ILLUMAPPLY" \
+  -f ${FILT} -r ${RUN} -t SKYFLAT -www ${WWWDIR}/ \
+  -bb ${SD}/${SURVEY}/BIAS -db ${SD}/${SURVEY}/DARK \
+  -fb ${SD}/${SURVEY}/${FILT} \
+  -sd ${SD}/${SURVEY}/
+
+./doall_run_OMEGACAM_single.sh -b ${MD}/ \
+  -s ${SURVEY} -m "TESTREG WEIGHTSSCIENCE CROSSTALKWEIGHTS" \
   -f ${FILT} -r ${RUN} -t SKYFLAT -www ${WWWDIR}/ \
   -bb ${SD}/${SURVEY}/BIAS -db ${SD}/${SURVEY}/DARK \
   -fb ${SD}/${SURVEY}/${FILT} \
