@@ -48,7 +48,7 @@ FILTER=$6
 MODE=$7
 
 MINOBJECTS=0
-CUTS="MAG RES PERCENT SIGMA"
+CUTS="MAG SIGMA"
 LOWERCUTPERCENT=0.1	#percent
 UPPERCUTPERCENT=0.1	#percent
 LOWERCUTRESABS=-0.2	#mag
@@ -188,10 +188,6 @@ do
       NUMBERLOWER=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${LOWERCUTPERCENT}'}'`
       LOWERVALUE=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | sort -g | ${P_GAWK} 'NR=='${NUMBERLOWER}' {print $0}'`
       HIGHERVALUE=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | sort -rg | ${P_GAWK} 'NR=='${NUMBERUPPER}' {print $0}'`
-      echo "NUMUP: ${NUMBERUPPER}"
-      echo "NUMLOW: ${NUMBERLOWER}"
-      echo "LOWVAL: ${LOWERVALUE}"
-      echo "HIGHVAL: ${HIGHERVALUE}"
 
       ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
 		      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
@@ -256,7 +252,7 @@ do
     i=$(( $i + 1 ))
   done
 
-
+  
   # Fitting the data
   ./illum_correction_fit.py ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/
 
