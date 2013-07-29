@@ -35,7 +35,7 @@ ILLUMDIR=$8
 
 theli_start "$*"
 
-if [ $# -ne 7 ]; then
+if [ $# -ne 8 ]; then
   theli_error "Wrong number of command line arguments!"
   exit 1;
 fi
