@@ -314,7 +314,10 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     steps = (abs(LRL)+abs(URL))/10.0
-    levels_limit = [np.round(-abs(LRL),2), -0.05, 0.05, np.round(abs(URL),2)]
+    if (sigma < 0.05):
+      levels_limit = [np.round(-abs(minimum),2), -0.05, 0.05, np.round(abs(maximum),2)]
+    else:
+      levels_limit = [np.round(-abs(LRL),2), -0.05, 0.05, np.round(abs(URL),2)]
     xi = lab.linspace(min(d[:,12]), max(d[:,12]))
     yi = lab.linspace(min(d[:,13]), max(d[:,13]))
 
@@ -386,6 +389,9 @@ if __name__ == '__main__':
   global OFFSETY
   global LRL
   global URL
+  global sigma
+  global minimum
+  global maxmimum
 
   
   #Reading command line arguments
@@ -466,6 +472,9 @@ if __name__ == '__main__':
   for k in range(NUMCHIPS):
     c = np.append(c,np.fromfile(path + "chip_%i.csv" %(k+1), sep="\t"))
   d = c.reshape((-1,15))
+  sigma = np.std(d[:,10])
+  minimum = np.amin(d[:,10])
+  maximum = np.amax(d[:,10])
 
   # Running plots on multiple cores to save time.
   pool = multiprocessing.Pool(usedcpus)
