@@ -48,7 +48,7 @@ FILTER=$6
 MODE=$7
 
 MINOBJECTS=0
-CUTS="MAG SIGMA"
+CUTS="RES SIGMA"
 LOWERCUTPERCENT=0.1	#percent
 UPPERCUTPERCENT=0.1	#percent
 LOWERCUTRESABS=-0.2	#mag
@@ -304,6 +304,8 @@ do
   ${P_GAWK} '{if ($1!="#") {print $11}}' ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.csv | ${P_GAWK} -f meanvar.awk >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat &
   
   # Creating a contour plot from the correction function and create a correction FITS file...
+  SIGMA=`${P_GAWK} '{if ($1!="#") {print $7}}' ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.csv \
+    | ${P_GAWK} -f meanvar.awk | grep sigma | ${P_GAWK} '{print $3}'`
   ./illum_correction_contourplot_fitfunction.py ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/ -${SIGMA} ${SIGMA}
 done
 
