@@ -241,11 +241,11 @@ do
     if [ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat" ]; then
       NUMBER=`${P_LDACTOASC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC -k MagZP | wc -l`
       if [ ${NUMBER} -le ${MINOBJECTS} ]; then
-	theli_error "Not enough objects avaiable for fitting. Chip ${CHIP} caused the first problem!"
+	theli_error "Not enough objects avaiable for fitting. Chip ${i} caused the first problem!"
 	exit 1;
       fi
     else
-      theli_error "No information for at least one chip avaiable. Chip ${CHIP} caused the first problem!"
+      theli_error "No information for at least one chip avaiable. Chip ${i} caused the first problem!"
       exit 1;
     fi
 
