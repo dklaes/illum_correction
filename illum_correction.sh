@@ -48,14 +48,14 @@ FILTER=$6
 MODE=$7
 
 MINOBJECTS=0
-CUTS="RES SIGMA"
+CUTS="RES"
 LOWERCUTPERCENT=0.1	#percent
 UPPERCUTPERCENT=0.1	#percent
 LOWERCUTRESABS=-0.2	#mag
 UPPERCUTRESABS=0.2	#mag
 LOWERCUTMAG=10		#mag
 UPPERCUTMAG=25		#mag
-SIGMAWIDTH=3
+SIGMAWIDTH=1
 
 
 # including some important files
@@ -136,10 +136,13 @@ fi
 
 
 # Checking if photometric calibration file is avaiable.
-if [ ! -e "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc" ]; then
-  theli_error "No photometric calibration file avaiable! Check 'night_${NIGHT}_${FILTERNAME}_result.asc'!"
-  exit 1;
-fi
+for NIGHT in ${NIGHTS}
+do
+	if [ ! -e "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc" ]; then
+	  theli_error "No photometric calibration file avaiable! Check 'night_${NIGHT}_${FILTERNAME}_result.asc'!"
+	  exit 1;
+	fi
+done
 
 
 # Now extract all needed information from the chip-based catalogues. 
