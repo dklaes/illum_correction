@@ -77,7 +77,7 @@ cd /${MAIND}/${STANDARDD}/calib/
 if [ "$7" == "RUNCALIB" ]; then
   NIGHTS=0
 elif [ "$7" == "NIGHTCALIB" ]; then
-  NIGHTS=`${P_LDACTOASC} -i /${MAIND}/${STANDARDD}/cat/allchips_tmp.cat -t PSSC \
+  NIGHTS=`${P_LDACTOASC} -i /${MAIND}/${STANDARDD}/cat/allexp_tmp.cat -t PSSC \
       -b -k GABODSID | ${P_SORT} | uniq | awk '{printf("%s ", $1)}'`
 else
   theli_error "RUNMODE not set correctly!"
