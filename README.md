@@ -8,7 +8,7 @@ Further information is coming later.
 
 Use the following links to download the stable versions:
 
-V1.1: https://github.com/dklaes/illum_correction/archive/V1.2.tar.gz
+V1.2: https://github.com/dklaes/illum_correction/archive/V1.2.tar.gz
 
 V1.1: https://github.com/dklaes/illum_correction/archive/V1.1.tar.gz
 
