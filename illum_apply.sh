@@ -47,14 +47,19 @@ if [ -d "${MAIND}/${APPLYD}/${EXTENSION}_IMAGES" ]; then
   exit 1;
 fi
 
+# Check if the ILLUMDIR directory exists.
+if [ -d "${ILLUMDIR}/${calib}/" ]; then
+  theli_error "Illumination correction directory does not exist! Exiting!"
+  exit 1;
+fi
+
 # Getting the nights
 REDDIR=`pwd`
-cd /${MAIND}/${STANDARDD}/calib/
+cd /${ILLUMDIR}/calib/
 if [ "$6" == "RUNCALIB" ]; then
   NIGHTS=0
 elif [ "$6" == "NIGHTCALIB" ]; then
-  NIGHTS=`${P_LDACTOASC} -i /${MAIND}/${STANDARDD}/cat/allchips_tmp.cat -t PSSC \
-      -b -k GABODSID | ${P_SORT} | uniq | awk '{printf("%s ", $1)}'`
+  NIGHTS=`ls -1 | grep residuals | grep -v residuals_0 | awk -F"_" '{print $2}'`
 else
   theli_error "RUNMODE not set correctly!"
   exit 1;
