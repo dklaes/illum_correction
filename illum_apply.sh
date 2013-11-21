@@ -48,14 +48,14 @@ if [ -d "${MAIND}/${APPLYD}/${EXTENSION}_IMAGES" ]; then
 fi
 
 # Check if the ILLUMDIR directory exists.
-if [ -d "${ILLUMDIR}/${calib}/" ]; then
+if [ ! -d "${ILLUMDIR}/${calib}/" ]; then
   theli_error "Illumination correction directory does not exist! Exiting!"
   exit 1;
 fi
 
 # Getting the nights
 REDDIR=`pwd`
-cd /${ILLUMDIR}/calib/
+cd ${ILLUMDIR}/calib/
 if [ "$6" == "RUNCALIB" ]; then
   NIGHTS=0
 elif [ "$6" == "NIGHTCALIB" ]; then
@@ -68,7 +68,7 @@ fi
 # Check if there is at least one folder with illumination correction files...
 for NIGHT in ${NIGHTS}
 do
-  if [ `ls ${ILLUMDIR}/residuals_${NIGHT}/chip_*.fits | wc -l` -ne "${NCHIPS}" ]; then
+  if [ `ls ${ILLUMDIR}/calib/residuals_${NIGHT}/chip_*.fits | wc -l` -ne "${NCHIPS}" ]; then
     theli_error "No files for illumination correction avaiable!"
     exit 1;
   fi
@@ -91,8 +91,8 @@ do
   # the 'sort' in the following pipeline ensures that the order of files is
   # always the same. This is not ensured by the 'find' command!
   FILES[$i]=`find -maxdepth 1 -name \*${EXTENSION}.fits |\
-             sort | awk '(NR % '${NPROC}' == '$i')'` 
-  NFILES[$i]=`echo ${FILES[$i]} | wc -w` 
+             sort | awk '(NR % '${NPROC}' == '$i')'`
+  NFILES[$i]=`echo ${FILES[$i]} | wc -w`
 
   j=$(( $i + 1 ))
 
@@ -118,7 +118,7 @@ do
       echo "Job ${j} (${k}/${NFILES[$i]}): processing ${file} in ${MODE} mode..."
 
       ${P_IC} '%1 %2 /' ${file} ${ILLUMDIR}/residuals_${NIGHT}/chip_${CHIP}.fits > ${BASE}I.fits
-      mv ${file} ${EXTENSION}_IMAGES/ &
+      mv ${file} ${EXTENSION}_IMAGES/
 
       k=$(( $k + 1 ))
     done
