@@ -105,6 +105,25 @@
 # 17.05.2013:
 # The CLEAN mode now also treats calibration files (final processed BIAS,
 # DARK and FLAT images). The mode for this is 'CLEANCALIB'
+#
+# 07.06.2013:
+# The ABSPHOTOM mode changed because the creation of catalogues used for
+# photometric calibration changed.
+#
+# 13.08.2013:
+# The script 'check_files_para.sh' was renamed to 'check_files_exposurepara.sh'
+# and this script was adapted accordingly.
+#
+# 06.09.2013:
+# - I modified the check for the WEIGHTS.... mode that only modes that
+#   start with 'WEIGHTS....' enter it (regular expression issue).
+# - I updated default photometric parameters for the g_SDSS and i_SDSS
+#   filters.
+#
+# 08.09.2013:
+# Bug fix in the TESTREG mode. The 'find' command for region files needs
+# to be called explicitely with a directory (trailing slash) if the region
+# files are symlinked from somewhere else.
 
 # the script is called with
 # ./doall_run_OMEGACAM_single.sh -m "MODE1 MODE2 ...."
@@ -149,6 +168,10 @@
 # - RUNDISTRIBUTE
 #   distribute current OMEGACAM run into the OMEGACAM/KIDS set structure
 #
+
+# inclusions
+. ./OMEGACAM.ini
+. ./bash_functions.include
 
 #
 # definitions and standard values:
@@ -222,12 +245,12 @@ do
        FLATBASEDIR=${2}
        shift 2
        ;;
-   -id)
-       ILLUMDIR=${2}
-       shift 2
-       ;;
    -m)
        MODE=${2}
+       shift 2
+       ;;
+   -id)
+       ILLUMDIR=${2}
        shift 2
        ;;
    -noclean)
@@ -345,26 +368,26 @@ export MAGMIN=-100  # dummy for the automatic absolute photometric
                     # calibration mode
 export MAGMAX=100   #      "
 
-#PHOTCAT=`pwd`/STRIPE82.cat
-PHOTCAT=`pwd`/../catalogues/thomas_catalogs/thomas_KIDS_SLOAN_0.0002_zerr_smaller_0.05.cat
-#PHOTCAT=`pwd`/../catalogues/STRIPE82.cat
+PHOTCAT=`pwd`/STRIPE82.cat
+PHOTCAT=`pwd`/KIDS_SLOAN.cat
 #PHOTCAT=/export/euclid2_1/terben/reduce_KIDS/SLOAN_KIDS_standards.cat
+
 # default values for color index, extinction coefficient
 # and color term (absolute photometry) in the different
 # WFI filters
 #
 if [ "${FILTER}" = "g_SDSS" ]; then
   export COLOR=gmr
-  export EXT=-0.11
-  export COLCOEFF=0.1
-  export MAGMIN=24.6  # for the automatic absolute photometric
-  export MAGMAX=25.0
+  export EXT=-0.15
+  export COLCOEFF=0.05
+  export MAGMIN=24.0  # for the automatic absolute photometric
+  export MAGMAX=26.0
 fi
 
 if [ "${FILTER}" = "i_SDSS" ]; then
   export COLOR=rmi
   export EXT=-0.04
-  export COLCOEFF=0.00
+  export COLCOEFF=0.05
   export MAGMIN=24.0  # for the automatic absolute photometric
   export MAGMAX=25.0
 fi
@@ -380,7 +403,7 @@ fi
 if [ "${FILTER}" = "u_SDSS" ]; then
   export COLOR=umg
   export EXT=-0.4
-  export COLCOEFF=-0.02
+  export COLCOEFF=+0.01
   export MAGMIN=23.0  # for the automatic absolute photometric
   export MAGMAX=26.0
 fi
@@ -454,10 +477,10 @@ do
 
       if [ "${BADMODELISTDIR}" != "" ]; then
         test -d ${BADMODELISTDIR} || mkdir ${BADMODELISTDIR}
-        ./check_files_para.sh ${MD} ${IMTYPE}_${FILTER} "" ${LIMITS} \
+        ./check_files_exposurepara.sh ${MD} ${IMTYPE}_${FILTER} "" ${LIMITS} \
             ${BADMODELISTDIR}/BADMODE_${IMTYPE}_${FILTER}_${RUN}.txt
       else
-        ./check_files_para.sh ${MD} ${IMTYPE}_${FILTER} "" ${LIMITS}
+        ./check_files_exposurepara.sh ${MD} ${IMTYPE}_${FILTER} "" ${LIMITS}
       fi
 
       # by default remove the BADMODE directory which contains
@@ -482,7 +505,7 @@ do
       # earlier stage we do not need to repeat this:
       if [ ! -s ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN} ]; then
         ./create_crosstalk_coefficients.sh ${MD} ${IMTYPE}_${FILTER} \
-            OBSTART 0.01 ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN}
+            OBSTART ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN}
       fi
       ./apply_crosstalk.sh ${MD} ${IMTYPE}_${FILTER} \
             ${CTLISTDIR}/ct_coeffs_${IMTYPE}_${FILTER}_${RUN} \
@@ -784,12 +807,11 @@ do
         #   100 sec.)
         REGPRESENT=0
         if [ -d ${REGDIR}/${FILTER}/${RUN} ]; then
-          for REGFILE in `find ${REGDIR}/${FILTER}/${RUN} -name \*reg`
+          for REGFILE in `find ${REGDIR}/${FILTER}/${RUN}/ -name \*reg`
           do
-            # check exptime of all FITS files of which reg files
-            # exist
-            FITSFILE=${MD}/SCIENCE_${FILTER}/`basename ${REGFILE} .reg`\
-                     OFC${SUPERFLAT}${FRINGING}.fits
+            # check exptime of all FITS files for which reg files exist
+            BASE=`basename ${REGFILE} .reg`
+            FITSFILE=${MD}/SCIENCE_${FILTER}/${BASE}OFC${SUPERFLAT}${FRINGING}.fits
 
             if [ -f ${FITSFILE} ]; then
               SCIENCE_FILE=`dfits ${FITSFILE} | fitsort -d EXPTIME\
@@ -809,7 +831,7 @@ done
 # create weight images (applicable to SCIENCE and SCIENCESHORT exposures)
 for mode in ${MODE}
 do
-  if [[ "${mode}" =~ "WEIGHTS" ]] && [ "${mode}" != "GLOBALWEIGHTS" ]; then
+  if [[ ${mode} =~ ^WEIGHTS ]]; then
     IMTYPE=`echo ${mode} | awk '{print substr($0, 8)}'`
 
     if [ -z ${IMTYPE} ]; then
@@ -825,6 +847,24 @@ do
     fi
     ./parallel_manager.sh ./create_weights_flags_para.sh ${MD} \
             ${IMTYPE}_${FILTER} OFC${SUPERFLAT}${FRINGING} WEIGHTS_FLAGS
+
+    # mark as bad science images whose weights have consist for more
+    # than 15% of zeros:
+    ./determine_badchips_exposurepara.sh ${MD} WEIGHTS \
+            OFC${SUPERFLAT}${FRINGING}.weight -0.5 0.5 15\
+            ./${RUN}_${FILTER}_badchip.txt
+
+    if [ -s ./${RUN}_${FILTER}_badchip.txt ]; then
+      while read IMAGE
+      do
+        BASE=`basename ${IMAGE} .weight.fits`
+        if [ -f ${MD}/${IMTYPE}_${FILTER}/${BASE}.fits ]; then
+          value "1"
+          writekey ${MD}/${IMTYPE}_${FILTER}/${BASE}.fits \
+                   BADCCD "${VALUE}" REPLACE
+        fi
+      done < ./${RUN}_${FILTER}_badchip.txt  
+    fi
   fi
 done
 
@@ -1008,30 +1048,6 @@ do
   fi
 done
 
-for mode in ${MODE}
-do
-  if [ "${mode}" = "ABSPHOTOM2" ]; then
-    if [ -d ${MD}/STANDARD_${FILTER} ]; then
-      ./parallel_manager.sh ./create_stdphotom_prepare_para.sh ${MD} \
-         STANDARD_${FILTER} OFC${SUPERFLAT}${FRINGING} 2MASS
-
-      ./create_stdphotom_merge_exposurepara.sh ${MD} STANDARD_${FILTER} \
-         OFC${SUPERFLAT}${FRINGING}  ${PHOTCAT}
-
-      # filter name in PHOTCAT. It is just the first letter of
-      # the complete FILTER name:
-      FILTNAMSTAND=`echo ${FILTER} | awk '{print substr($0, 1, 1)}'`
-      ./create_abs_photo_info.sh ${MD} STANDARD_${FILTER} \
-         SCIENCE_${FILTER} OFC${SUPERFLAT}${FRINGING} \
-         ${FILTER} ${FILTNAMSTAND} ${COLOR} ${EXT} \
-         ${COLCOEFF} RUNCALIB\
-         AUTOMATIC ${MAGMIN} ${MAGMAX}
-    fi
-    ./create_zp_correct_header.sh ${MD} SCIENCE_${FILTER} \
-         OFC${SUPERFLAT}${FRINGING}
-  fi
-done
-
 # transfer photometric solution from the main science frames also to the
 # shoer science observations:
 for mode in ${MODE}
@@ -1139,18 +1155,9 @@ done
 for mode in ${MODE}
 do
   if [ "${mode}" = "RUNDISTRIBUTE" ]; then
-    # The following is necessary because the following script call expects
-    # the survey identifier KIDS for the KIDS survey. However, we provide
-    # it with version numbers such as KIDS_V0.5:  
-    REALSURVEY=`awk 'BEGIN {
-                  if ("'${SURVEY}'" ~ /KIDS/) {
-                    print "KIDS"
-                  } else {
-                    print "'${SURVEY}'"}
-                  }'`  
     ./parallel_manager.sh ./link_sets_OMEGACAM_para.sh ${MD} \
         SCIENCE_${FILTER} OFC${SUPERFLAT}${FRINGING} ${FILTER} \
-        ${SETDIR} ${REALSURVEY}
+        ${SETDIR} ${SURVEY}
   fi
 done
 
@@ -1242,19 +1249,19 @@ done
 # illumination correction (calculate illum correction: ILLUMCORRECTION , apply e.g.ILLUMSCIENCE) :
 for mode in ${MODE}
 do
-  if [[ "${mode}" =~ "ILLUM" ]]; then
-    IMTYPE=`echo ${mode} | awk '{print substr($0, 6)}'`
+if [[ "${mode}" =~ "ILLUM" ]]; then
+IMTYPE=`echo ${mode} | awk '{print substr($0, 6)}'`
     echo $IMTYPE
     FILTNAMSTAND=`echo ${FILTER} | awk '{print substr($0, 1, 1)}'`
     echo $FILTER
     echo $FILTNAMSTAND
     if [ "${IMTYPE}" == "CORRECTION" ]; then
-	./illum_correction.sh ${MD} STANDARD_${FILTER} ${FILTER} \
-		2 OFC${SUPERFLAT}${FRINGING} ${FILTNAMSTAND} RUNCALIB
+        ./illum_correction.sh ${MD} STANDARD_${FILTER} ${FILTER} \
+                2 OFC${SUPERFLAT}${FRINGING} ${FILTNAMSTAND} RUNCALIB
     else
-	./illum_apply.sh ${MD} ${IMTYPE}_${FILTER} STANDARD_${FILTER} \
-		${FILTER} OFC${SUPERFLAT}${FRINGING} RUNCALIB ${NPROC} \
+        ./illum_apply.sh ${MD} ${IMTYPE}_${FILTER} STANDARD_${FILTER} \
+                ${FILTER} OFC${SUPERFLAT}${FRINGING} RUNCALIB ${NPROC} \
                 ${ILLUMDIR}
     fi
-  fi
+fi
 done
