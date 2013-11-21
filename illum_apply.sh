@@ -117,7 +117,7 @@ do
 
       echo "Job ${j} (${k}/${NFILES[$i]}): processing ${file} in ${MODE} mode..."
 
-      ${P_IC} '%1 %2 /' ${file} ${ILLUMDIR}/residuals_${NIGHT}/chip_${CHIP}.fits > ${BASE}I.fits
+      ${P_IC} '%1 %2 /' ${file} ${ILLUMDIR}/calib/residuals_${NIGHT}/chip_${CHIP}.fits > ${BASE}I.fits
       mv ${file} ${EXTENSION}_IMAGES/
 
       k=$(( $k + 1 ))
