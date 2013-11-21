@@ -120,6 +120,9 @@ do
       ${P_IC} '%1 %2 /' ${file} ${ILLUMDIR}/calib/residuals_${NIGHT}/chip_${CHIP}.fits > ${BASE}I.fits
       mv ${file} ${EXTENSION}_IMAGES/
 
+      mv ${MAIND}/WEIGHTS/${BASE}.flag.fits ${MAIND}/WEIGHTS/${BASE}I.flag.fits
+      mv ${MAIND}/WEIGHTS/${BASE}.weight.fits ${MAIND}/WEIGHTS/${BASE}I.weight.fits
+
       k=$(( $k + 1 ))
     done
   } &
