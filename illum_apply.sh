@@ -18,6 +18,7 @@
 # $5  extension of images
 # $6  operation mode ("RUNCALIB" for illum correction for the entire run or "NIGHTCALIB" for illum correction for every night)
 # $7  number of processors to be used
+# $8  illum dir, where the illumination correction files are stored
 
 MAIND=$1
 APPLYD=$2
