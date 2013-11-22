@@ -3,13 +3,19 @@
 # ----------------------------------------------------------------
 # File Name:           illum_apply.sh
 # Author:              Dominik Klaes (dklaes@astro.uni-bonn.de)
-# Last modified on:    31.05.2013
-# Version:		V1.0
+# Last modified on:    22.11.2013
+# Version:		V1.2
 # Description:         Apply illumination correction to data
 # ----------------------------------------------------------------
 
 # Changes from V1.0 to V1.1
 # - more comments
+
+# Changes from V1.0 to V1.1
+# - directory where the to be corrected files are stored can be given
+# - directory where the illumination correction files are stored can be given
+# - new apply mode. Now it's possible to apply an existing illumination correction
+#   or just keep the old files without any corrections but with the new extension
 
 # $1  main dir
 # $2  dir to apply (e.g. SCIENCE)
@@ -19,6 +25,8 @@
 # $6  operation mode ("RUNCALIB" for illum correction for the entire run or "NIGHTCALIB" for illum correction for every night)
 # $7  number of processors to be used
 # $8  illum dir, where the illumination correction files are stored
+# $9  Apply illumination correction ("YES") or apply pseudo correction ("NO") (instead of
+#     correcting with correction files just move the files)
 
 MAIND=$1
 APPLYD=$2
@@ -28,6 +36,7 @@ EXTENSION=$5
 MODE=$6
 NPROC=$7
 ILLUMDIR=$8
+APPLY=$9
 
 # including some important files
 . ${INSTRUMENT:?}.ini
@@ -36,7 +45,7 @@ ILLUMDIR=$8
 
 theli_start "$*"
 
-if [ $# -ne 8 ]; then
+if [ $# -ne 9 ]; then
   theli_error "Wrong number of command line arguments!"
   exit 1;
 fi
@@ -68,9 +77,11 @@ fi
 # Check if there is at least one folder with illumination correction files...
 for NIGHT in ${NIGHTS}
 do
-  if [ `ls ${ILLUMDIR}/calib/residuals_${NIGHT}/chip_*.fits | wc -l` -ne "${NCHIPS}" ]; then
-    theli_error "No files for illumination correction avaiable!"
-    exit 1;
+  if [ "${APPLY}" == "YES" ]; then  
+    if [ `ls ${ILLUMDIR}/calib/residuals_${NIGHT}/chip_*.fits | wc -l` -ne "${NCHIPS}" ]; then
+      theli_error "No files for illumination correction avaiable!"
+      exit 1;
+    fi
   fi
 done
 
@@ -117,8 +128,15 @@ do
 
       echo "Job ${j} (${k}/${NFILES[$i]}): processing ${file} in ${MODE} mode..."
 
-      ${P_IC} '%1 %2 /' ${file} ${ILLUMDIR}/calib/residuals_${NIGHT}/chip_${CHIP}.fits > ${BASE}I.fits
-      mv ${file} ${EXTENSION}_IMAGES/
+      if [ "${APPLY}" == "YES" ]; then
+	${P_IC} '%1 %2 /' ${file} ${ILLUMDIR}/calib/residuals_${NIGHT}/chip_${CHIP}.fits > ${BASE}I.fits
+	mv ${file} ${EXTENSION}_IMAGES/
+      elif [ "${APPLY}" == "NO" ]; then
+	mv ${file} ${BASE}I.fits
+      else
+	theli_error "Wrong command line argument (argument 9)"
+	exit 1
+      fi
 
       mv ${MAIND}/WEIGHTS/${BASE}.flag.fits ${MAIND}/WEIGHTS/${BASE}I.flag.fits
       mv ${MAIND}/WEIGHTS/${BASE}.weight.fits ${MAIND}/WEIGHTS/${BASE}I.weight.fits
