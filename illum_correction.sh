@@ -229,7 +229,7 @@ do
 
     elif [ "${METHOD}" == "SIGMA" ]; then
       ${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
-                     -k Residual >> ${TEMPDIR}/res_${NIGHT}.csv_$$
+                     -k Residual > ${TEMPDIR}/res_${NIGHT}.csv_$$
 
       SIGMA=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
 	      | ${P_GAWK} -f meanvar.awk | grep sigma | ${P_GAWK} '{print $3}'`
