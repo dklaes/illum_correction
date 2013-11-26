@@ -3,8 +3,8 @@
 # ----------------------------------------------------------------
 # File Name:           illum_correction.sh
 # Author:              Dominik Klaes (dklaes@astro.uni-bonn.de)
-# Last modified on:    02.05.2013
-# Version:		V1.1
+# Last modified on:    26.11.2013
+# Version:	       V1.2
 # Description:         Estimate position dependent magnitude offset
 # ----------------------------------------------------------------
 
@@ -28,16 +28,21 @@
 # LOWERCUTMAG		Minimal magnitude being considered
 # UPPERCUTMAG		Maximal magnitude being considered
 # SIGMAWIDTH		How many sigmas shall be taken?
-# + CUTRESABS with respect to MEAN
-
-# Changes from V1.1 to V1.2
-# - included _$$ to temporary files
+# LOWERCUTRESMEAN	Residuals with smaller residuals than this value with respect to mean will be cutted
+# UPPERCUTRESMEAN	Residuals with larger residuals than this value with respect to mean will be cutted
 
 # Changes from V1.0 to V1.1
 # - corrected estimation of magnitude
 # - deleted time measurements
 # - deleted "illum_correction_plot_fitted.py" command because this file was combined \
 #   with "illum_correction_contourplot_fitfunction.py"
+
+# Changes from V1.1 to V1.2
+# - included _$$ to temporary files
+
+# Changes from V1.2 to V1.3
+# - included residual cut with respect to the mean
+
 
 MAIND=$1
 STANDARDD=$2
@@ -56,6 +61,8 @@ UPPERCUTRESABS=0.2	#mag
 LOWERCUTMAG=10		#mag
 UPPERCUTMAG=25		#mag
 SIGMAWIDTH=1
+LOWERCUTRESMEAN=-0.2	#mag
+UPPERCUTRESMEAN=0.2	#mag
 
 
 # including some important files
@@ -201,6 +208,17 @@ do
       ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
                       -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
                       -c "((Residual>${LOWERCUTRESABS})AND(Residual<${UPPERCUTRESABS}));"
+
+    elif  [ "${METHOD}" == "RESMEAN" ]; then
+      ${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                     -k Residual > ${TEMPDIR}/res_${NIGHT}.csv_$$
+
+      MEAN=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
+              | ${P_GAWK} -f meanvar.awk | grep mean | ${P_GAWK} '{print $3}'`
+
+      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
+                      -c "((Residual>(${LOWERCUTRESABS}+${MEAN}))AND(Residual<(${UPPERCUTRESABS}+${MEAN})));"
 
 
     elif [ "${METHOD}" == "MAG" ]; then
