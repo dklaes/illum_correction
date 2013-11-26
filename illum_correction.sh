@@ -209,6 +209,7 @@ do
                       -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
                       -c "((Residual>${LOWERCUTRESABS})AND(Residual<${UPPERCUTRESABS}));"
 
+
     elif  [ "${METHOD}" == "RESMEAN" ]; then
       ${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
                      -k Residual > ${TEMPDIR}/res_${NIGHT}.csv_$$
@@ -218,7 +219,7 @@ do
 
       ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
                       -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
-                      -c "((Residual>(${LOWERCUTRESABS}+${MEAN}))AND(Residual<(${UPPERCUTRESABS}+${MEAN})));"
+                      -c "((Residual>(${LOWERCUTRESMEAN}+${MEAN}))AND(Residual<(${UPPERCUTRESMEAN}+${MEAN})));"
 
 
     elif [ "${METHOD}" == "MAG" ]; then
