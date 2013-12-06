@@ -31,6 +31,7 @@ import os
 import sys
 import multiprocessing
 import pyfits
+from matplotlib import cm
 
 
 def appearance(xlabel, ylabel, title, xlimits, ylimits, grid, camgrid, plt, sub):
@@ -363,7 +364,34 @@ def plot(arg):
     appearance('Xpos','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
 
     lab.savefig(path + 'contourplots.png')
+
+  elif (arg == 'scatter'):
+    # Scatter plot with location of used objects with color coded depending on residual value before and after fitting.
+
+    lab.clf()
+    fig = plt.figure()
+
+    datamax = np.amax((np.fabs(d[:,6]), np.fabs(d[:,10])))
+    intervall = np.round(np.linspace(-datamax, datamax, num=11),2)
+
+    ax1 = fig.add_subplot(1, 1, 1)
+    cax = ax1.scatter(d[:,12], d[:,13], c=d[:,6], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
+    cbar = plt.colorbar(cax, ticks=intervall)
+
+    appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
     
+    lab.savefig(path + 'scatter_before_fitting.png')
+
+
+    lab.clf()
+    fig = plt.figure()
+
+    ax1 = fig.add_subplot(1, 1, 1)
+    cax = ax1.scatter(d[:,12], d[:,13], c=d[:,10], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
+    cbar = plt.colorbar(cax, ticks=intervall)
+    appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
+
+    lab.savefig(path + 'scatter_after_fitting.png')
     
     
 if __name__ == '__main__':
@@ -478,5 +506,5 @@ if __name__ == '__main__':
 
   # Running plots on multiple cores to save time.
   pool = multiprocessing.Pool(usedcpus)
-  plotlist = ['resfit', 'cam', 'mag', 'res', 'histo', 'contour']
+  plotlist = ['resfit', 'cam', 'mag', 'res', 'histo', 'contour', 'scatter']
   pool.map(plot, plotlist)
