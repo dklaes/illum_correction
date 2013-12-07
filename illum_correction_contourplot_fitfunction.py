@@ -372,12 +372,13 @@ def plot(arg):
     fig = plt.figure()
 
     datamax = np.amax((np.fabs(d[:,6]), np.fabs(d[:,10])))
-    intervall = np.round(np.linspace(-datamax, datamax, num=11),2)
+    intervall = np.linspace(-datamax, datamax, num=11)
 
     ax1 = fig.add_subplot(1, 1, 1)
     cax = ax1.scatter(d[:,12], d[:,13], c=d[:,6], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
-    cbar = plt.colorbar(cax, ticks=intervall)
+    cbar = plt.colorbar(cax, ticks=intervall, format='%0.2f')
 
+    cbar.ax.set_ylabel('Residuum in mag')
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
     
     lab.savefig(path + 'scatter_before_fitting.png')
@@ -388,7 +389,9 @@ def plot(arg):
 
     ax1 = fig.add_subplot(1, 1, 1)
     cax = ax1.scatter(d[:,12], d[:,13], c=d[:,10], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
-    cbar = plt.colorbar(cax, ticks=intervall)
+    cbar = plt.colorbar(cax, ticks=intervall, format='%0.2f')
+
+    cbar.ax.set_ylabel('Residuum in mag')
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
 
     lab.savefig(path + 'scatter_after_fitting.png')
