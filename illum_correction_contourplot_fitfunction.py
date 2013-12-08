@@ -6,7 +6,7 @@
 # File Name:           illum_correction_contourplot_fitfunction.py
 # Author:              Dominik Klaes (dklaes@astro.uni-bonn.de)
 # Last modified on:    31.05.2013
-# Version:		V1.1
+# Version:             V1.2
 # Description:         Create FITS-correction files and corresponding plots
 # ----------------------------------------------------------------
 
@@ -15,6 +15,9 @@
 # - Checkplot magnitude / residual dependency added
 # - Now running also without X-server
 # - old "illum_correction_plot_fitted.py" included and restructed to multiprocessing
+
+# Changes from V1.1 to V1.2
+# - scatter plot added
 
 # $1  main dir
 # $2  lower residual limit (always negative)
