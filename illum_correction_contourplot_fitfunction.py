@@ -185,12 +185,12 @@ def plot(arg):
     yi = lab.linspace(min(YYALL), max(YYALL))
 
     # 1
-    ax1 = fig.add_subplot(2, 2, 1)
+    ax1 = fig.add_subplot(2, 2, 1, aspect='equal')
     ax1.plot(d[:,12],d[:,13],'k,')
     appearance('','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
 
     # 2
-    ax2 = fig.add_subplot(2, 2, 2)
+    ax2 = fig.add_subplot(2, 2, 2, aspect='equal')
     zi = lab.griddata(XXALL, YYALL, epswZPALL, xi, yi)
     plt.setp(ax2.get_xticklabels(), visible=False)
     plt.setp(ax2.get_yticklabels(), visible=False)
@@ -200,7 +200,7 @@ def plot(arg):
     appearance('','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
 
     # 3
-    ax3 = fig.add_subplot(2, 2, 3)
+    ax3 = fig.add_subplot(2, 2, 3, aspect='equal')
     zi = lab.griddata(XXALL, YYALL, epswoZPALL, xi, yi)
     plt.setp(ax3.get_xticklabels(), visible=True)
     plt.setp(ax3.get_yticklabels(), visible=True)
@@ -210,7 +210,7 @@ def plot(arg):
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
 
     # 4
-    ax4 = fig.add_subplot(2, 2, 4)
+    ax4 = fig.add_subplot(2, 2, 4, aspect='equal')
     zi = lab.griddata(XXALL, YYALL, FCHIPS, xi, yi)
     plt.setp(ax4.get_xticklabels(), visible=True)
     plt.setp(ax4.get_yticklabels(), visible=False)
@@ -218,7 +218,7 @@ def plot(arg):
     axbar = ax4.contourf(xi, yi, zi, 10)
     fig.colorbar(axbar)
     appearance('Xpos','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
-    
+
     lab.savefig(path + 'camera.png')
   
   elif (arg == 'mag'):
@@ -327,7 +327,7 @@ def plot(arg):
 
     # Optimised order so that zi is computed only once.
     # 1
-    ax1 = fig.add_subplot(2, 2, 1)
+    ax1 = fig.add_subplot(2, 2, 1, aspect='equal')
     zi = lab.griddata(d[:,12], d[:,13], d[:,6], xi, yi)
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.setp(ax1.get_yticklabels(), visible=True)
@@ -337,7 +337,7 @@ def plot(arg):
     appearance('','Ypos','Before fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
 
     # 3
-    ax3 = fig.add_subplot(2, 2, 3)
+    ax3 = fig.add_subplot(2, 2, 3, aspect='equal')
     plt.setp(ax3.get_xticklabels(), visible=True)
     plt.setp(ax3.get_yticklabels(), visible=True)
     axbar = ax3.contourf(xi, yi, zi,levels=levels_limit)
@@ -348,7 +348,7 @@ def plot(arg):
     
     # Optimised order so that zi is computed only once.
     # 2
-    ax2 = fig.add_subplot(2, 2, 2)
+    ax2 = fig.add_subplot(2, 2, 2, aspect='equal')
     zi = lab.griddata(d[:,12], d[:,13], d[:,10], xi, yi)
     plt.setp(ax2.get_xticklabels(), visible=False)
     plt.setp(ax2.get_yticklabels(), visible=False)
@@ -358,7 +358,7 @@ def plot(arg):
     appearance('','','After fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
 
     # 4
-    ax4 = fig.add_subplot(2, 2, 4)
+    ax4 = fig.add_subplot(2, 2, 4, aspect='equal')
     plt.setp(ax4.get_xticklabels(), visible=True)
     plt.setp(ax4.get_yticklabels(), visible=False)
     axbar = ax4.contourf(xi, yi, zi,levels=levels_limit)
@@ -377,7 +377,7 @@ def plot(arg):
     datamax = np.amax((np.fabs(d[:,6]), np.fabs(d[:,10])))
     intervall = np.linspace(-datamax, datamax, num=11)
 
-    ax1 = fig.add_subplot(1, 1, 1)
+    ax1 = fig.add_subplot(1, 1, 1, aspect='equal')
     cax = ax1.scatter(d[:,12], d[:,13], c=d[:,6], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
     cbar = plt.colorbar(cax, ticks=intervall, format='%0.2f')
 
@@ -390,7 +390,7 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
 
-    ax1 = fig.add_subplot(1, 1, 1)
+    ax1 = fig.add_subplot(1, 1, 1, aspect='equal')
     cax = ax1.scatter(d[:,12], d[:,13], c=d[:,10], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
     cbar = plt.colorbar(cax, ticks=intervall, format='%0.2f')
 
