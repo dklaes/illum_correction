@@ -247,6 +247,8 @@ def plot(arg):
     # 2:	Upper right:	After fitting, from x-axis
     # 3:	Lower left:	Before fitting, from y-axis
     # 4:	Lower right:	After fitting, from y-axis
+
+    datamax = np.amax((np.fabs(d[:,6]), np.fabs(d[:,10])))
     
     lab.clf()
     fig = plt.figure()
@@ -254,22 +256,22 @@ def plot(arg):
     # 1
     ax1 = fig.add_subplot(2, 2, 1)
     ax1.plot(d[:,12],d[:,6],'k,')
-    appearance('Xpos','Residual','Before fitting', [CAMXMIN, CAMXMAX], [LRL, URL], 'grid', 'nocamgrid', ax1, 'sub')
+    appearance('Xpos','Residual','Before fitting', [CAMXMIN, CAMXMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax1, 'sub')
 
     # 2
     ax2 = fig.add_subplot(2, 2, 2)
     ax2.plot(d[:,12],d[:,10],'k,')
-    appearance('Xpos','','After fitting', [CAMXMIN, CAMXMAX], [LRL, URL], 'grid', 'nocamgrid', ax2, 'sub')
+    appearance('Xpos','','After fitting', [CAMXMIN, CAMXMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax2, 'sub')
 
     # 3
     ax3 = fig.add_subplot(2, 2, 3)
     ax3.plot(d[:,13],d[:,6],'k,')
-    appearance('Ypos','Residual','', [CAMYMIN, CAMYMAX], [LRL, URL], 'grid', 'nocamgrid', ax3, 'sub')
+    appearance('Ypos','Residual','', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax3, 'sub')
 
     # 4
     ax4 = fig.add_subplot(2, 2, 4)
     ax4.plot(d[:,13],d[:,10],'k,')
-    appearance('Ypos','','', [CAMYMIN, CAMYMAX], [LRL, URL], 'grid', 'nocamgrid', ax4, 'sub')
+    appearance('Ypos','','', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax4, 'sub')
 
     lab.savefig(path + 'residuals.png')
     
