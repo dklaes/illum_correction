@@ -42,6 +42,7 @@
 
 # Changes from V1.2 to V1.3
 # - included residual cut with respect to the mean
+# - Single plots are available
 
 
 MAIND=$1
@@ -97,10 +98,12 @@ for NIGHT in ${NIGHTS}
 do
   if [ ! -d "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}" ]; then
     mkdir ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}
+    mkdir ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/single_plots
   else
     theli_warn "Old illumination correction detected. I will remove and redo it!"
     rm -r ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}
     mkdir ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}
+    mkdir ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/single_plots
   fi
 done
 
