@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #scipy-0.11 and numpy-1.6.2 required!
 
@@ -18,6 +17,11 @@
 
 # Changes from V1.1 to V1.2
 # - scatter plot added
+
+# Changes from V1.2 to V1.3
+# - Including single plots
+# - Changed condition for colorbars of contour plots from sigma < 0.05 to sigma < 0.06
+# - Closed every plot directly after savefig to save memory
 
 # $1  main dir
 # $2  lower residual limit (always negative)
@@ -170,6 +174,47 @@ def plot(arg):
     appearance('Ypos','','', [CAMYMIN, CAMYMAX], '', 'grid', 'nocamgrid', ax4, 'sub')
 
     lab.savefig(path + 'residuals_fitfunction.png')
+    plt.close()
+
+
+    # Plot now all plots individually in single files.
+
+    # 1
+    lab.clf()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1.plot(XXALL,epswoZPALL,'k.')
+    appearance('Xpos','Residual','', [CAMXMIN, CAMXMAX], '', 'grid', 'nocamgrid', ax1, 'sub')
+    lab.savefig(path + 'single_plots/' + 'residuals_fitfunction_1.png')
+    plt.close()
+    
+    # 2
+    lab.clf()
+    fig = plt.figure()
+    ax2 = fig.add_subplot(1,1,1)
+    ax2.plot(YYALL,epswoZPALL,'k.')
+    appearance('Ypos','Residual','', [CAMYMIN, CAMYMAX], '', 'grid', 'nocamgrid', ax2, 'sub')
+    lab.savefig(path + 'single_plots/' + 'residuals_fitfunction_2.png')
+    plt.close()
+    
+    # 3
+    lab.clf()
+    fig = plt.figure()
+    ax3 = fig.add_subplot(1,1,1)
+    ax3.plot(XXALL,FCHIPS,'k.')
+    appearance('Xpos','Residual','', [CAMXMIN, CAMXMAX], '', 'grid', 'nocamgrid', ax3, 'sub')
+    lab.savefig(path + 'single_plots/' + 'residuals_fitfunction_3.png')
+    plt.close()
+    
+    # 4
+    lab.clf()
+    fig = plt.figure()
+    ax4 = fig.add_subplot(1,1,1)
+    ax4.plot(YYALL,FCHIPS,'k.')
+    appearance('Ypos','Residual','', [CAMYMIN, CAMYMAX], '', 'grid', 'nocamgrid', ax4, 'sub')
+    lab.savefig(path + 'single_plots/' + 'residuals_fitfunction_4.png')
+    plt.close()
+
 
   elif (arg == 'cam'):
     # Plotting camera related stuff. Plots are:
@@ -191,35 +236,82 @@ def plot(arg):
 
     # 2
     ax2 = fig.add_subplot(2, 2, 2, aspect='equal')
-    zi = lab.griddata(XXALL, YYALL, epswZPALL, xi, yi)
+    zi2 = lab.griddata(XXALL, YYALL, epswZPALL, xi, yi)
     plt.setp(ax2.get_xticklabels(), visible=False)
     plt.setp(ax2.get_yticklabels(), visible=False)
-    ax2.contourf(xi, yi, zi, 10)
-    axbar = ax2.contourf(xi, yi, zi, 10)
+    ax2.contourf(xi, yi, zi2, 10)
+    axbar = ax2.contourf(xi, yi, zi2, 10)
     fig.colorbar(axbar)
     appearance('','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
 
     # 3
     ax3 = fig.add_subplot(2, 2, 3, aspect='equal')
-    zi = lab.griddata(XXALL, YYALL, epswoZPALL, xi, yi)
+    zi3 = lab.griddata(XXALL, YYALL, epswoZPALL, xi, yi)
     plt.setp(ax3.get_xticklabels(), visible=True)
     plt.setp(ax3.get_yticklabels(), visible=True)
-    ax3.contourf(xi, yi, zi, 10)
-    axbar = ax3.contourf(xi, yi, zi, 10)
+    ax3.contourf(xi, yi, zi3, 10)
+    axbar = ax3.contourf(xi, yi, zi3, 10)
     fig.colorbar(axbar)
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
 
     # 4
     ax4 = fig.add_subplot(2, 2, 4, aspect='equal')
-    zi = lab.griddata(XXALL, YYALL, FCHIPS, xi, yi)
+    zi4 = lab.griddata(XXALL, YYALL, FCHIPS, xi, yi)
     plt.setp(ax4.get_xticklabels(), visible=True)
     plt.setp(ax4.get_yticklabels(), visible=False)
-    ax4.contourf(xi, yi, zi, 10)
-    axbar = ax4.contourf(xi, yi, zi, 10)
+    ax4.contourf(xi, yi, zi4, 10)
+    axbar = ax4.contourf(xi, yi, zi4, 10)
     fig.colorbar(axbar)
     appearance('Xpos','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
 
     lab.savefig(path + 'camera.png')
+    plt.close()
+    
+    
+    # Plot now all plots individually in single files.
+    
+    # 1
+    lab.clf()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1, 1, 1, aspect='equal')
+    ax1.plot(d[:,12],d[:,13],'k,')
+    appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
+    lab.savefig(path + 'single_plots/' + 'camera_1.png')
+    plt.close()
+    
+    # 2
+    lab.clf()
+    fig = plt.figure()
+    ax2 = fig.add_subplot(1, 1, 1, aspect='equal')
+    ax2.contourf(xi, yi, zi2, 10)
+    axbar = ax2.contourf(xi, yi, zi2, 10)
+    fig.colorbar(axbar)
+    appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
+    lab.savefig(path + 'single_plots/' + 'camera_2.png')
+    plt.close()
+    
+    # 3
+    lab.clf()
+    fig = plt.figure()
+    ax3 = fig.add_subplot(1, 1, 1, aspect='equal')
+    ax3.contourf(xi, yi, zi3, 10)
+    axbar = ax3.contourf(xi, yi, zi3, 10)
+    fig.colorbar(axbar)
+    appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
+    lab.savefig(path + 'single_plots/' + 'camera_3.png')
+    plt.close()
+    
+    # 4
+    lab.clf()
+    fig = plt.figure()
+    ax4 = fig.add_subplot(1, 1, 1, aspect='equal')
+    ax4.contourf(xi, yi, zi4, 10)
+    axbar = ax4.contourf(xi, yi, zi4, 10)
+    fig.colorbar(axbar)
+    appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
+    lab.savefig(path + 'single_plots/' + 'camera_4.png')
+    plt.close()
+    
   
   elif (arg == 'mag'):
     # Plotting mag-residuals dependency before and after fitting. Plots are:
@@ -240,6 +332,29 @@ def plot(arg):
     appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax2, 'sub')
     
     lab.savefig(path + 'mag_dependency.png')
+    plt.close()
+    
+    
+    # Plot now all plots individually in single files.
+    
+    # 1
+    lab.clf()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.plot(d[:,14],d[:,6],'k,')
+    appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax1, 'sub')
+    lab.savefig(path + 'single_plots/' + 'mag_dependency_1.png')
+    plt.close()
+    
+    # 2
+    lab.clf()
+    fig = plt.figure()
+    ax2 = fig.add_subplot(1, 1, 1)
+    ax2.plot(d[:,9],d[:,10],'k,')
+    appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax2, 'sub')
+    lab.savefig(path + 'single_plots/' + 'mag_dependency_2.png')
+    plt.close()
+    
 
   elif (arg == 'res'):
     # Residuals shown before and after fitting, from x- and y-axis. Plots are:
@@ -274,6 +389,47 @@ def plot(arg):
     appearance('Ypos','','', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax4, 'sub')
 
     lab.savefig(path + 'residuals.png')
+    plt.close()
+    
+    
+    # Plot now all plots individually in single files.
+    
+    # 1
+    lab.clf()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.plot(d[:,12],d[:,6],'k,')
+    appearance('Xpos','Residual','Before fitting', [CAMXMIN, CAMXMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax1, 'sub')
+    lab.savefig(path + 'single_plots/' + 'residuals_1.png')
+    plt.close()
+        
+    # 2
+    lab.clf()
+    fig = plt.figure()
+    ax2 = fig.add_subplot(1, 1, 1)
+    ax2.plot(d[:,12],d[:,10],'k,')
+    appearance('Xpos','Residual','After fitting', [CAMXMIN, CAMXMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax2, 'sub')
+    lab.savefig(path + 'single_plots/' + 'residuals_2.png')
+    plt.close()
+    
+    # 3
+    lab.clf()
+    fig = plt.figure()
+    ax3 = fig.add_subplot(1, 1, 1)
+    ax3.plot(d[:,13],d[:,6],'k,')
+    appearance('Ypos','Residual','Before fitting', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax3, 'sub')
+    lab.savefig(path + 'single_plots/' + 'residuals_3.png')
+    plt.close()
+    
+    # 4
+    lab.clf()
+    fig = plt.figure()
+    ax4 = fig.add_subplot(1, 1, 1)
+    ax4.plot(d[:,13],d[:,10],'k,')
+    appearance('Ypos','Residual','After fitting', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax4, 'sub')
+    lab.savefig(path + 'single_plots/' + 'residuals_4.png')
+    plt.close()
+    
     
   elif (arg == 'histo'):
     # Histograms of number of objects in magnitude bins, total and zoomed in. Plots are:
@@ -309,6 +465,47 @@ def plot(arg):
     appearance('Residual','Number of objects','', [-0.1,0.1], ax4.set_ylim(), 'grid', 'nocamgrid', ax3, 'sub')
     
     lab.savefig(path + 'histograms.png')
+    plt.close()
+    
+    
+    # Plot now all plots individually in single files.
+    
+    # 2
+    lab.clf()
+    fig = plt.figure()
+    ax2 = fig.add_subplot(1, 1, 1)
+    ax2.hist(d[:,10],bins=BIN, range=(LRL,URL))
+    appearance('Residual','Number of objects','After fitting', [LRL, URL], '', 'grid', 'nocamgrid', ax2, 'sub')
+    lab.savefig(path + 'single_plots/' + 'histograms_2.png')
+    plt.close()
+    
+    # 1
+    lab.clf()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.hist(d[:,6],bins=BIN, range=(LRL,URL))
+    appearance('Residual','Number of objects','Before fitting', [LRL, URL], ax2.set_ylim(), 'grid', 'nocamgrid', ax1, 'sub')
+    lab.savefig(path + 'single_plots/' + 'histograms_1.png')
+    plt.close()
+    
+    # 4
+    lab.clf()
+    fig = plt.figure()
+    ax4 = fig.add_subplot(1, 1, 1)
+    ax4.hist(d[:,10],bins=41, range=(-0.105, 0.105))
+    appearance('Residual','Number of objects','After fitting', [-0.1,0.1], '', 'grid', 'nocamgrid', ax4, 'sub')
+    lab.savefig(path + 'single_plots/' + 'histograms_4.png')
+    plt.close()
+    
+    # 3
+    lab.clf()
+    fig = plt.figure()
+    ax3 = fig.add_subplot(1, 1, 1)
+    ax3.hist(d[:,6],bins=41, range=(-0.105, 0.105))
+    appearance('Residual','Number of objects','Before fitting', [-0.1,0.1], ax4.set_ylim(), 'grid', 'nocamgrid', ax3, 'sub')
+    lab.savefig(path + 'single_plots/' + 'histograms_3.png')
+    plt.close()
+    
     
   elif (arg == 'contour'):
     # Contourplots of residuals before and after plotting with two different colourbar ranges. Plots are:
@@ -320,7 +517,7 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     steps = (abs(LRL)+abs(URL))/10.0
-    if (sigma < 0.05):
+    if (sigma < 0.06):
       levels_limit = [np.round(-abs(minimum),2), -0.05, 0.05, np.round(abs(maximum),2)]
     else:
       levels_limit = [np.round(-abs(LRL),2), -0.05, 0.05, np.round(abs(URL),2)]
@@ -330,45 +527,94 @@ def plot(arg):
     # Optimised order so that zi is computed only once.
     # 1
     ax1 = fig.add_subplot(2, 2, 1, aspect='equal')
-    zi = lab.griddata(d[:,12], d[:,13], d[:,6], xi, yi)
+    zi13 = lab.griddata(d[:,12], d[:,13], d[:,6], xi, yi)
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.setp(ax1.get_yticklabels(), visible=True)
-    axbar = ax1.contourf(xi, yi, zi,levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2),color=k)
+    axbar = ax1.contourf(xi, yi, zi13,levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2),color=k)
     fig.colorbar(axbar)
-    ax1.contourf(xi, yi, zi,levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
+    ax1.contourf(xi, yi, zi13, levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
     appearance('','Ypos','Before fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
 
     # 3
     ax3 = fig.add_subplot(2, 2, 3, aspect='equal')
     plt.setp(ax3.get_xticklabels(), visible=True)
     plt.setp(ax3.get_yticklabels(), visible=True)
-    axbar = ax3.contourf(xi, yi, zi,levels=levels_limit)
+    axbar = ax3.contourf(xi, yi, zi13,levels=levels_limit)
     fig.colorbar(axbar)
-    ax3.contourf(xi, yi, zi,levels=levels_limit)
+    ax3.contourf(xi, yi, zi13, levels=levels_limit)
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
     
     
     # Optimised order so that zi is computed only once.
     # 2
     ax2 = fig.add_subplot(2, 2, 2, aspect='equal')
-    zi = lab.griddata(d[:,12], d[:,13], d[:,10], xi, yi)
+    zi24 = lab.griddata(d[:,12], d[:,13], d[:,10], xi, yi)
     plt.setp(ax2.get_xticklabels(), visible=False)
     plt.setp(ax2.get_yticklabels(), visible=False)
-    axbar = ax2.contourf(xi, yi, zi,levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
+    axbar = ax2.contourf(xi, yi, zi24, levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
     fig.colorbar(axbar)
-    ax2.contourf(xi, yi, zi,levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
+    ax2.contourf(xi, yi, zi24, levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
     appearance('','','After fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
 
     # 4
     ax4 = fig.add_subplot(2, 2, 4, aspect='equal')
     plt.setp(ax4.get_xticklabels(), visible=True)
     plt.setp(ax4.get_yticklabels(), visible=False)
-    axbar = ax4.contourf(xi, yi, zi,levels=levels_limit)
+    axbar = ax4.contourf(xi, yi, zi24, levels=levels_limit)
     fig.colorbar(axbar)
-    ax4.contourf(xi, yi, zi,levels=levels_limit)
+    ax4.contourf(xi, yi, zi24, levels=levels_limit)
     appearance('Xpos','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
 
     lab.savefig(path + 'contourplots.png')
+    plt.close()
+    
+    
+    # Plot now all plots individually in single files.
+    
+    # 1
+    lab.clf()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1, 1, 1, aspect='equal')
+    axbar = ax1.contourf(xi, yi, zi13, levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2),color=k)
+    fig.colorbar(axbar)
+    ax1.contourf(xi, yi, zi13, levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
+    appearance('Xpos','Ypos','Before fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
+    lab.savefig(path + 'single_plots/' + 'contourplots_1.png')
+    plt.close()
+    
+    # 3
+    lab.clf()
+    fig = plt.figure()
+    ax3 = fig.add_subplot(1, 1, 1, aspect='equal')
+    axbar = ax3.contourf(xi, yi, zi13,levels=levels_limit)
+    fig.colorbar(axbar)
+    ax3.contourf(xi, yi, zi13, levels=levels_limit)
+    appearance('Xpos','Ypos','Before fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
+    lab.savefig(path + 'single_plots/' + 'contourplots_3.png')
+    plt.close()
+    
+    # 2
+    lab.clf()
+    fig = plt.figure()
+    ax2 = fig.add_subplot(1, 1, 1, aspect='equal')
+    axbar = ax2.contourf(xi, yi, zi24, levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
+    fig.colorbar(axbar)
+    ax2.contourf(xi, yi, zi24, levels=np.round(np.arange(LRL, URL+(steps/2.0), steps),2))
+    appearance('Xpos','Ypos','After fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
+    lab.savefig(path + 'single_plots/' + 'contourplots_2.png')
+    plt.close()
+    
+    # 4
+    lab.clf()
+    fig = plt.figure()
+    ax4 = fig.add_subplot(1, 1, 1, aspect='equal')
+    axbar = ax4.contourf(xi, yi, zi24, levels=levels_limit)
+    fig.colorbar(axbar)
+    ax4.contourf(xi, yi, zi24, levels=levels_limit)
+    appearance('Xpos','Ypos','After fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
+    lab.savefig(path + 'single_plots/' + 'contourplots_4.png')
+    plt.close()
+    
 
   elif (arg == 'scatter'):
     # Scatter plot with location of used objects with color coded depending on residual value before and after fitting.
@@ -387,6 +633,8 @@ def plot(arg):
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
     
     lab.savefig(path + 'scatter_before_fitting.png')
+    lab.savefig(path + 'single_plots/' + 'scatter_before_fitting.png')
+    plt.close()
 
 
     lab.clf()
@@ -400,6 +648,8 @@ def plot(arg):
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
 
     lab.savefig(path + 'scatter_after_fitting.png')
+    lab.savefig(path + 'single_plots/' + 'scatter_after_fitting.png')
+    plt.close()
     
     
 if __name__ == '__main__':
