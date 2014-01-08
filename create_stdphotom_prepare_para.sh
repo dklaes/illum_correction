@@ -59,6 +59,9 @@ STANDARDCAT=$4
 for CHIP in ${!#}
 do
   CATS=`find ${MD}/${SD}/cat -name \*_${CHIP}${EXTENSION}.cat`
+  FIRSTCAT=`echo ${CATS} | ${P_GAWK} '{print $1}'`
+  FIRSTFILE=`basename ${FIRSTCAT} .cat`
+  cp ${MD}/${SD}/${FIRSTFILE}.fits ${TEMPDIR}/dummy.fits_$$
 
   if [ "${CATS}" != "" ]; then
     for CAT in ${CATS}
@@ -78,7 +81,24 @@ do
            -t OBJECTS -p Xpos Ypos -r Ra Dec
 
       # get global xy coodinates with respect to the middle of the camera
-      ${P_SKY2XY} -x 0.0 0.0 ${MD}/${SD}/${BASE}.fits @${TEMPDIR}/${BASE}_ldac.asc | ${P_GAWK} '{print $5, $6}' \
+      CRVAL1=`grep CRVAL1 ${MD}/${SD}/headers_scamp_${STANDARDCAT}/${HEADBASE}.head | ${P_GAWK} '{print $3}'`
+      value ${CRVAL1}
+      writekey ${TEMPDIR}/dummy.fits_$$ CRVAL1 "${VALUE} / WCS Ref. value (RA in decimal degrees)" REPLACE
+
+      CRVAL2=`grep CRVAL2 ${MD}/${SD}/headers_scamp_${STANDARDCAT}/${HEADBASE}.head | ${P_GAWK} '{print $3}'`
+      value ${CRVAL2}
+      writekey ${TEMPDIR}/dummy.fits_$$ CRVAL2 "${VALUE} / WCS Ref. value (DEC in decimal degrees)" REPLACE
+
+      CRPIX1=`grep CRPIX1 ${MD}/${SD}/headers_scamp_${STANDARDCAT}/${HEADBASE}.head | ${P_GAWK} '{print $3}'`
+      value ${CRPIX1}
+      writekey ${TEMPDIR}/dummy.fits_$$ CRPIX1 "${VALUE} / WCS Coordinate reference pixel" REPLACE
+
+      CRPIX2=`grep CRPIX2 ${MD}/${SD}/headers_scamp_${STANDARDCAT}/${HEADBASE}.head  | ${P_GAWK} '{print $3}'`
+      value ${CRPIX2}
+      writekey ${TEMPDIR}/dummy.fits_$$ CRPIX2 "${VALUE} / WCS Coordinate reference pixel" REPLACE
+
+
+      ${P_SKY2XY} -x 0.0 0.0 ${TEMPDIR}/dummy.fits_$$ @${TEMPDIR}/${BASE}_ldac.asc | ${P_GAWK} '{print $5, $6}' \
            > ${TEMPDIR}/${BASE}_ldac_global.asc
       ${P_ASCTOLDAC} -i ${TEMPDIR}/${BASE}_ldac_global.asc \
            -o ${TEMPDIR}/${BASE}_ldac_global.cat \
