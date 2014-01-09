@@ -59,11 +59,11 @@ STANDARDCAT=$4
 for CHIP in ${!#}
 do
   CATS=`find ${MD}/${SD}/cat -name \*_${CHIP}${EXTENSION}.cat`
-  FIRSTCAT=`echo ${CATS} | ${P_GAWK} '{print $1}'`
-  FIRSTFILE=`basename ${FIRSTCAT} .cat`
-  cp ${MD}/${SD}/${FIRSTFILE}.fits ${TEMPDIR}/dummy.fits_$$
 
   if [ "${CATS}" != "" ]; then
+    FIRSTCAT=`echo ${CATS} | ${P_GAWK} '{print $1}'`
+    FIRSTFILE=`basename ${FIRSTCAT} .cat`
+    cp ${MD}/${SD}/${FIRSTFILE}.fits ${TEMPDIR}/dummy.fits_$$
     for CAT in ${CATS}
     do
       BASE=`basename ${CAT} .cat`
