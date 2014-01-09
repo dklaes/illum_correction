@@ -93,7 +93,7 @@ else
 fi
 cd ${REDDIR}
 
-# Check, for each avaiable night, if the residuals folder exist. If so, delete it and if not, create it.
+# Check, for each available night, if the residuals folder exist. If so, delete it and if not, create it.
 for NIGHT in ${NIGHTS}
 do
   if [ ! -d "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}" ]; then
@@ -109,7 +109,7 @@ done
 
 # Getting some information about the used camera. Checking first if ${CHIPGEOMETRY} is not empty.
 if [ "${CHIPGEOMETRY}" == "" ]; then
-  theli_error "Chipgeometry not set! Check in ${INSTRUMENT}.ini if avaiable!"
+  theli_error "Chipgeometry not set! Check in ${INSTRUMENT}.ini if available!"
   exit 1;
 else
   ROWMAX=`echo ${CHIPGEOMETRY} | ${P_GAWK} '{print $1}'`
@@ -121,10 +121,10 @@ else
 fi
 
 # Getting all cats into one catalogue (modification needed to update from reduce_KIDS_1.7.2 to 1.7.6)
-# and checking if they are avaiable.
+# and checking if they are available.
 CATS=`find /${MAIND}/${STANDARDD}/cat/ -name \*all_photprep_merg.cat`
 if [ "${CATS}" == "" ]; then
-theli_error "No standard catalogue matched catalogues avaiable!"
+theli_error "No standard catalogue matched catalogues available!"
   exit 1;
 else
   ${P_LDACPASTE} -i ${CATS} -t PSSC\
@@ -145,11 +145,11 @@ if [ ! -e "${TEMPDIR}/tmp_exp.cat2_$$" ]; then
 fi
 
 
-# Checking if photometric calibration file is avaiable.
+# Checking if photometric calibration file is available.
 for NIGHT in ${NIGHTS}
 do
 	if [ ! -e "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc" ]; then
-	  theli_error "No photometric calibration file avaiable! Check 'night_${NIGHT}_${FILTERNAME}_result.asc'!"
+	  theli_error "No photometric calibration file available! Check 'night_${NIGHT}_${FILTERNAME}_result.asc'!"
 	  exit 1;
 	fi
 done
@@ -251,7 +251,7 @@ do
   cp ${TEMPDIR}/tmp_filter.cat${i}_$$ ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat
 
   # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
-  # Check, if for all chips enough objects are avaiable. If not, warn.
+  # Check, if for all chips enough objects are available. If not, warn.
   # Extracting all needed information into a CSV file (night based)
   i=1
   while [ ${i} -le ${NCHIPS} ]
@@ -263,10 +263,10 @@ do
     if [ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat" ]; then
       NUMBER=`${P_LDACTOASC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC -k MagZP | wc -l`
       if [ ${NUMBER} -le ${MINOBJECTS} ]; then
-	theli_warning "Not enough objects avaiable for fitting. Chip ${i} caused the problem!"
+	theli_warning "Not enough objects available for fitting. Chip ${i} caused the problem!"
       fi
     else
-      theli_warning "No information for at least one chip avaiable. Chip ${i} caused the problem!"
+      theli_warning "No information for at least one chip available. Chip ${i} caused the problem!"
     fi
 
     ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC \
