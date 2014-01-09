@@ -124,7 +124,7 @@ fi
 # and checking if they are avaiable.
 CATS=`find /${MAIND}/${STANDARDD}/cat/ -name \*all_photprep_merg.cat`
 if [ "${CATS}" == "" ]; then
-  theli_error "No standard catalogue matched catalogues avaiable!"
+theli_error "No standard catalogue matched catalogues avaiable!"
   exit 1;
 else
   ${P_LDACPASTE} -i ${CATS} -t PSSC\
@@ -264,17 +264,9 @@ do
       NUMBER=`${P_LDACTOASC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC -k MagZP | wc -l`
       if [ ${NUMBER} -le ${MINOBJECTS} ]; then
 	theli_warning "Not enough objects avaiable for fitting. Chip ${i} caused the problem!"
-	LIST=`find /${MAIND}/${STANDARDD}/ -name \*_${i}${EXTENSION}.fits`
-	NUMOK=`${P_DFITS} ${LIST} | fitsort BADCCD | ${P_GAWK} '{print $2}' | grep -c 0`
-	NUMBAD=`${P_DFITS} ${LIST} | fitsort BADCCD | ${P_GAWK} '{print $2}' | grep -c 1`
-	theli_warning "${NUMBAD}/$(( NUMOK + NUMBAD )) files of chip ${i} have a BADCCD flag."
       fi
     else
       theli_warning "No information for at least one chip avaiable. Chip ${i} caused the problem!"
-      LIST=`find /${MAIND}/${STANDARDD}/ -name \*_${i}${EXTENSION}.fits`
-      NUMOK=`${P_DFITS} ${LIST} | fitsort BADCCD | ${P_GAWK} '{print $2}' | grep -c 0`
-      NUMBAD=`${P_DFITS} ${LIST} | fitsort BADCCD | ${P_GAWK} '{print $2}' | grep -c 1`
-      theli_warning "${NUMBAD}/$(( NUMOK + NUMBAD )) files of chip ${i} have a BADCCD flag."
     fi
 
     ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC \
