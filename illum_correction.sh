@@ -251,7 +251,7 @@ do
   cp ${TEMPDIR}/tmp_filter.cat${i}_$$ ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat
 
   # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
-  # Check, if for all chips enough objects are avaiable. If not, abort.
+  # Check, if for all chips enough objects are avaiable. If not, warn.
   # Extracting all needed information into a CSV file (night based)
   i=1
   while [ ${i} -le ${NCHIPS} ]
@@ -263,12 +263,18 @@ do
     if [ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat" ]; then
       NUMBER=`${P_LDACTOASC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC -k MagZP | wc -l`
       if [ ${NUMBER} -le ${MINOBJECTS} ]; then
-	theli_error "Not enough objects avaiable for fitting. Chip ${i} caused the first problem!"
-	exit 1;
+	theli_warning "Not enough objects avaiable for fitting. Chip ${i} caused the problem!"
+	LIST=`find /${MAIND}/${STANDARDD}/ -name \*_${i}${EXTENSION}.fits`
+	NUMOK=`${P_DFITS} ${LIST} | fitsort BADCCD | ${P_GAWK} '{print $2}' | grep -c 0`
+	NUMBAD=`${P_DFITS} ${LIST} | fitsort BADCCD | ${P_GAWK} '{print $2}' | grep -c 1`
+	theli_warning "${NUMBAD}/$(( NUMOK + NUMBAD )) files of chip ${i} have a BADCCD flag."
       fi
     else
-      theli_error "No information for at least one chip avaiable. Chip ${i} caused the first problem!"
-      exit 1;
+      theli_warning "No information for at least one chip avaiable. Chip ${i} caused the problem!"
+      LIST=`find /${MAIND}/${STANDARDD}/ -name \*_${i}${EXTENSION}.fits`
+      NUMOK=`${P_DFITS} ${LIST} | fitsort BADCCD | ${P_GAWK} '{print $2}' | grep -c 0`
+      NUMBAD=`${P_DFITS} ${LIST} | fitsort BADCCD | ${P_GAWK} '{print $2}' | grep -c 1`
+      theli_warning "${NUMBAD}/$(( NUMOK + NUMBAD )) files of chip ${i} have a BADCCD flag."
     fi
 
     ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC \
