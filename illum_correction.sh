@@ -261,7 +261,7 @@ do
                     -c "(CHIP=${i});"
     
     if [ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat" ]; then
-      NUMBER=`${P_LDACTOASC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC -k MagZP | wc -l`
+      NUMBER=`${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC -k MagZP | wc -l`
       if [ ${NUMBER} -le ${MINOBJECTS} ]; then
 	theli_warning "Not enough objects available for fitting. Chip ${i} caused the problem!"
       fi
