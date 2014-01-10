@@ -58,12 +58,32 @@ STANDARDCAT=$4
 # start script task:
 for CHIP in ${!#}
 do
-  CATS=`find ${MD}/${SD}/cat -name \*_${CHIP}${EXTENSION}.cat`
+  ALLCATS=`find ${MD}/${SD}/cat -name \*_${CHIP}${EXTENSION}.cat`
 
-  if [ "${CATS}" != "" ]; then
-    FIRSTCAT=`echo ${CATS} | ${P_GAWK} '{print $1}'`
+  if [ "${ALLCATS}" != "" ]; then
+    FIRSTCAT=`echo ${ALLCATS} | ${P_GAWK} '{print $1}'`
     FIRSTFILE=`basename ${FIRSTCAT} .cat`
     cp ${MD}/${SD}/${FIRSTFILE}.fits ${TEMPDIR}/dummy.fits_$$
+
+    CATS=`echo`
+    NUMBAD=0
+    NUMOK=0
+    for CAT in ${ALLCATS}
+    do
+      BASE=`basename ${CAT} .cat`
+      BADCCD=`${P_DFITS} /${MD}/${SD}/${BASE}.fits | fitsort BADCCD | grep ${BASE} | ${P_GAWK} '{print $2}'`
+	if [ "${BADCCD}" == "0" ]; then
+	  CATS=`echo ${CATS} ${CAT}`
+	  NUMOK=$(( NUMOK + 1 ))
+	else
+	  NUMBAD=$(( NUMBAD + 1 ))
+	fi
+    done
+
+    if [ "${NUMBAD}" != "0" ]; then
+      theli_warning "${NUMBAD}/$(( NUMOK + NUMBAD )) files of chip ${CHIP} have a BADCCD flag."
+    fi
+
     for CAT in ${CATS}
     do
       BASE=`basename ${CAT} .cat`
