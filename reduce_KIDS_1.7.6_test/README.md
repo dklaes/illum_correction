@@ -24,7 +24,7 @@ The following files have to be saved into the reduce directory:
 - doit_all_standard_shortprocess.sh
 - illum_apply.sh
 - illum_correction.sh
-
+- photo_abs.py (Added error output in result file)
 
 The following files have to be saved into the CONF directory (path to CONF directory see progs.ini):
 - stdphotom_prepare_global_coordinates.conf
