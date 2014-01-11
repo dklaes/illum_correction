@@ -1,7 +1,5 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #scipy-0.11 and numpy-1.6.2 required!
-
 
 # ----------------------------------------------------------------
 # File Name:           illum_correction_contourplot_fitfunction.py
@@ -241,9 +239,9 @@ def plot(arg):
     zi2 = lab.griddata(XXALL, YYALL, epswZPALL, xi, yi)
     plt.setp(ax2.get_xticklabels(), visible=False)
     plt.setp(ax2.get_yticklabels(), visible=False)
-    ax2.contourf(xi, yi, zi2, 10)
-    axbar = ax2.contourf(xi, yi, zi2, 10)
-    fig.colorbar(axbar)
+    CS2 = ax2.contourf(xi, yi, zi2, 10)
+    cbar2 = plt.colorbar(CS2, format='%0.2f')
+    cbar2.ax.set_ylabel('Residual in mag')
     appearance('','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
 
     # 3
@@ -251,9 +249,9 @@ def plot(arg):
     zi3 = lab.griddata(XXALL, YYALL, epswoZPALL, xi, yi)
     plt.setp(ax3.get_xticklabels(), visible=True)
     plt.setp(ax3.get_yticklabels(), visible=True)
-    ax3.contourf(xi, yi, zi3, 10)
-    axbar = ax3.contourf(xi, yi, zi3, 10)
-    fig.colorbar(axbar)
+    CS3 = ax3.contourf(xi, yi, zi3, 10)
+    cbar3 = plt.colorbar(CS3, format='%0.2f')
+    cbar3.ax.set_ylabel('Residual in mag')
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
 
     # 4
@@ -261,9 +259,9 @@ def plot(arg):
     zi4 = lab.griddata(XXALL, YYALL, FCHIPS, xi, yi)
     plt.setp(ax4.get_xticklabels(), visible=True)
     plt.setp(ax4.get_yticklabels(), visible=False)
-    ax4.contourf(xi, yi, zi4, 10)
-    axbar = ax4.contourf(xi, yi, zi4, 10)
-    fig.colorbar(axbar)
+    CS4 = ax4.contourf(xi, yi, zi4, 10)
+    cbar4 = plt.colorbar(CS4, format='%0.2f')
+    cbar4.ax.set_ylabel('Residual in mag')
     appearance('Xpos','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
 
     lab.savefig(path + 'camera.png')
@@ -285,9 +283,9 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax2 = fig.add_subplot(1, 1, 1, aspect='equal')
-    ax2.contourf(xi, yi, zi2, 10)
-    axbar = ax2.contourf(xi, yi, zi2, 10)
-    fig.colorbar(axbar)
+    CS2 = ax2.contourf(xi, yi, zi2, 10)
+    cbar2 = plt.colorbar(CS2, format='%0.2f')
+    cbar2.ax.set_ylabel('Residual in mag')
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax2, 'sub')
     lab.savefig(path + 'single_plots/' + 'camera_2.png')
     plt.close()
@@ -296,9 +294,9 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax3 = fig.add_subplot(1, 1, 1, aspect='equal')
-    ax3.contourf(xi, yi, zi3, 10)
-    axbar = ax3.contourf(xi, yi, zi3, 10)
-    fig.colorbar(axbar)
+    CS3 = ax3.contourf(xi, yi, zi3, 10)
+    cbar3 = plt.colorbar(CS3, format='%0.2f')
+    cbar3.ax.set_ylabel('Residual in mag')
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
     lab.savefig(path + 'single_plots/' + 'camera_3.png')
     plt.close()
@@ -307,9 +305,9 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax4 = fig.add_subplot(1, 1, 1, aspect='equal')
-    ax4.contourf(xi, yi, zi4, 10)
-    axbar = ax4.contourf(xi, yi, zi4, 10)
-    fig.colorbar(axbar)
+    CS4 = ax4.contourf(xi, yi, zi4, 10)
+    cbar4 = plt.colorbar(CS4, format='%0.2f')
+    cbar4.ax.set_ylabel('Residual in mag')
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
     lab.savefig(path + 'single_plots/' + 'camera_4.png')
     plt.close()
