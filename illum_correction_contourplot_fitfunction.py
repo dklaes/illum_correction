@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #scipy-0.11 and numpy-1.6.2 required!
 
