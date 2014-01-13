@@ -33,7 +33,7 @@ def get_data(k):
     chip = np.array([])
     for i in range(k):
       b = np.append(b,np.fromfile(path + "chip_%i.csv" %(i+1), sep="\t"))
-    b = b.reshape((-1,13))
+    b = b.reshape((-1,15))
     x = np.append(x,b[:,7])
     y = np.append(y,b[:,8])
     eps = np.append(eps,b[:,6])
