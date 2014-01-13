@@ -17,6 +17,7 @@
 # $6			filter as used in files (e.g. R instead of r_SDSS)
 # $7  			operation mode ("RUNCALIB" for illum correction for the entire
 #     			run or "NIGHTCALIB" for illum correction for every night)
+# $8			name of color term (e.g. gmr)
 #
 # MINOBJECTS		Minimal number of objects that are required for fitting
 # CUTS			Array containing cut types and order
@@ -43,6 +44,8 @@
 # Changes from V1.2 to V1.3
 # - included residual cut with respect to the mean
 # - Single plots are available
+# - Added color term name and include color term
+# - Included error calculation for residual with Gaussian error propagation
 
 
 MAIND=$1
@@ -52,6 +55,7 @@ SOLUTION=$4
 EXTENSION=$5
 FILTER=$6
 MODE=$7
+COLOR=$8
 
 MINOBJECTS=0
 CUTS="RESMEAN"
@@ -74,8 +78,8 @@ UPPERCUTRESMEAN=0.2	#mag
 theli_start "$*"
 
 # Checking for correct number of command line arguments.
-if [ $# -ne 7 ]; then
-  theli_error "Wrong number of command line arguments! You gave me $# but I need 7."
+if [ $# -ne 8 ]; then
+  theli_error "Wrong number of command line arguments! You gave me $# but I need 8."
   exit 1;
 fi
 
@@ -134,9 +138,11 @@ fi
 # Doing some filtering process which is the same for all chips and nights already here
 # (for performance reasons).
 # Filtering only those detected source with a mag in a certain filter less 99mag
+COLOR1=`echo ${COLOR} | awk '{print substr($0, 1, 1)}'`
+COLOR2=`echo ${COLOR} | awk '{print substr($0, 3, 3)}'`
 ${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat_$$ \
 		  -o ${TEMPDIR}/tmp_exp.cat2_$$ \
-		  -t PSSC -c "(${FILTER}mag<99);"
+		  -t PSSC -c "((((((${FILTER}mag<99)AND(${FILTER}mag>-9999))AND(${COLOR1}mag<99))AND(${COLOR1}mag>-9999))AND(${COLOR2}mag<99))AND(${COLOR2}mag>-9999));"
 
 # Checking if we have still objects at all.
 if [ ! -e "${TEMPDIR}/tmp_exp.cat2_$$" ]; then
@@ -161,9 +167,13 @@ done
 
 for NIGHT in ${NIGHTS}
 do
-  # Getting the zeropoint with the given solution number line
+  # Getting the zeropoint, extenction and color coefficients and corresponding errors with the given solution number line
   ZP=`${P_GAWK} 'NR == '${SOLUTION}' {print $1}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
   EXT=`${P_GAWK} 'NR == '${SOLUTION}' {print $2}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
+  COLCOEFF=`${P_GAWK} 'NR == '${SOLUTION}' {print $3}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
+  ZPERR=`${P_GAWK} 'NR == '${SOLUTION}' {print $4}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
+  EXTERR=`${P_GAWK} 'NR == '${SOLUTION}' {print $5}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
+  COLCOEFFERR=`${P_GAWK} 'NR == '${SOLUTION}' {print $6}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
 
   # First filtering for objects of this specific night. Then calculate
   # the residual with the ZP from the fit done by the THELI pipeline.
@@ -177,16 +187,18 @@ do
 		    -t PSSC \
 		    -c "(GABODSID=${NIGHT});"
   fi
-
+  
   ${P_LDACCALC} -i ${TEMPDIR}/tmp_exp.cat3_$$ \
                 -o ${TEMPDIR}/tmp_exp.cat4_$$ -t PSSC \
-                -c "(Mag+${ZP}+${EXT}*AIRMASS);" -n MagZP "" -k FLOAT
+                -c "(Mag+${ZP}+${EXT}*AIRMASS+${COLCOEFF}*${COLOR});" -n MagZP "" -k FLOAT \
+		-c "(sqrt(MagErr*MagErr+${ZPERR}*${ZPERR}+(AIRMASS*${EXTERR})*(AIRMASS*${EXTERR}))+((${COLOR1}mag-${COLOR2}mag)*${COLCOEFFERR})*((${COLOR1}mag-${COLOR2}mag)*${COLCOEFFERR})+((${COLCOEFF}*${COLOR1}mag_err)*(${COLCOEFF}*${COLOR1}mag_err))+((-${COLCOEFF}*${COLOR2}mag_err)*(-${COLCOEFF}*${COLOR2}mag_err)));" \
+		-n MagZPErr "" -k FLOAT
   ${P_LDACCALC} -i ${TEMPDIR}/tmp_exp.cat4_$$ \
                 -o ${TEMPDIR}/tmp_exp.cat5_$$ -t PSSC \
                 -c "(MagZP-${FILTER}mag);" -n Residual "" -k FLOAT \
+		-c "(sqrt((MagZPErr*MagZPErr)+(${FILTER}mag_err*${FILTER}mag_err)));" -n Residual_Err "" -k FLOAT \
                 -c "((2.0*Xpos_global)/${PIXXMAX});" -n Xpos_mod "" -k FLOAT \
                 -c "((2.0*Ypos_global)/${PIXYMAX});" -n Ypos_mod "" -k FLOAT
-
 
   # Now filtering according to given methods and values:
   i=0
@@ -271,7 +283,7 @@ do
 
     ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC \
 	    -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID Residual Xpos_mod \
-	    Ypos_mod AIRMASS Xpos_global Ypos_global MagZP >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
+	    Ypos_mod AIRMASS Xpos_global Ypos_global MagZP MagZPErr Residual_Err >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
     i=$(( $i + 1 ))
   done
 
@@ -302,7 +314,7 @@ do
     
     # Extracting all needed information into a CSV file (night based)
     ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered_fitted.cat -t PSSC -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID \
-      Residual Xpos_mod Ypos_mod Mag_fitted Residual_fitted AIRMASS Xpos_global Ypos_global MagZP >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
+      Residual Xpos_mod Ypos_mod Mag_fitted Residual_fitted AIRMASS Xpos_global Ypos_global MagZP MagZPErr Residual_Err >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
     i=$(( $i + 1 ))
   done
 
