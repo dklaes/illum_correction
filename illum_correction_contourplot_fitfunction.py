@@ -758,7 +758,7 @@ if __name__ == '__main__':
   c = np.array([])
   for k in range(NUMCHIPS):
     c = np.append(c,np.fromfile(path + "chip_%i.csv" %(k+1), sep="\t"))
-  d = c.reshape((-1,15))
+  d = c.reshape((-1,17))
   sigma = np.std(d[:,10])
   minimum = np.amin(d[:,10])
   maximum = np.amax(d[:,10])
