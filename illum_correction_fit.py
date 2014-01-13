@@ -31,6 +31,7 @@ def get_data(k):
     b = np.array([])
     eps = np.array([])
     chip = np.array([])
+    sigma = np.array([])
     for i in range(k):
       b = np.append(b,np.fromfile(path + "chip_%i.csv" %(i+1), sep="\t"))
     b = b.reshape((-1,15))
@@ -38,8 +39,9 @@ def get_data(k):
     y = np.append(y,b[:,8])
     eps = np.append(eps,b[:,6])
     chip = np.append(chip,b[:,5])
+    sigma = np.append(sigma,b[:,14])
     
-    return x, y, eps, chip
+    return x, y, eps, chip, sigma
 
 def delta(x,x0):
   delta = -1.0*abs(x-x0)
@@ -86,12 +88,12 @@ path = sys.argv[1]
 NUMCHIPS = int((os.popen("echo ${NCHIPS} | awk '{print $1}'").readlines())[0])
 
 #Getting x,y coordinates, the residual and the chip number...
-x, y, eps, chip = get_data(NUMCHIPS)
+x, y, eps, chip, sigma = get_data(NUMCHIPS)
 
 #Now fit...
 print("Fitting all chips...")
 p0 = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
-best_par, cov_fit = curve_fit(function_poly2d, (x,y,chip), eps, p0, sigma=0.5)
+best_par, cov_fit = curve_fit(function_poly2d, (x,y,chip), eps, p0, sigma=sigma)
 
 #Print the output...
 poly2d_curve_output(best_par, cov_fit, NUMCHIPS)
