@@ -425,12 +425,13 @@ def pasteCatalogs(infiles, outfile='out.cat', table='OBJECTS'):
     nrows = nrows + nextfile[table].data.shape[0]
   hdu = pyfits.new_table(firstfile[table].columns, nrows=nrows)
   
-  k=0
+  position=0
   for file in infiles.split(' '):
     hdulist = pyfits.open(file)
+    filerows = hdulist[table].data.shape[0]
     for i in range(len(firstfile[table].columns)):
-	hdu.data.field(i)[(firstfilerows*k):(firstfilerows*(k+1))]=hdulist[table].data.field(i)
-    k = k + 1
+      hdu.data.field(i)[position:(position+filerows)]=hdulist[table].data.field(i)
+    position = position + filerows
   hdu.header = firstfile[table].header
   hdu.header.update('NAXIS2', nrows)
   hdu.columns = firstfile[table].columns
