@@ -1,7 +1,7 @@
 ###############
 # @file ldac.py
-# @author Douglas Applegate & Thomas Erben
-# @date 27/11/2013
+# @author Douglas Applegate & Thomas Erben & Dominik Klaes
+# @date 16/01/2014
 #
 # @brief Utilities to make accessing LDAC cats easier
 ###############
@@ -405,5 +405,33 @@ def openObjectFile(filename, table='OBJECTS'):
 
     return openObjects(hdulist, table)
 
-        
-        
+def pasteCatalogs(infiles, outfile='out.cat', table='OBJECTS'):
+  """
+  This function pastes several catalogs into one.
+  
+  infiles contains all input catalogs, separated by a space
+  outfile is the filename of the output catalog, default is out.cat
+  table gives the table name that shall be used, default is OBJECTS
+  
+  Example:
+  >>> ldac.pasteCatalogs('input1.cat input2.cat', outfile='outfile.cat', table='PSSC')
+  """
+  
+  nrows = 0
+  firstfile = pyfits.open(infiles.split(' ')[0])
+  firstfilerows = firstfile[table].data.shape[0]
+  for file in infiles.split(' '):
+    nextfile = pyfits.open(file)
+    nrows = nrows + nextfile[table].data.shape[0]
+  hdu = pyfits.new_table(firstfile[table].columns, nrows=nrows)
+  
+  k=0
+  for file in infiles.split(' '):
+    hdulist = pyfits.open(file)
+    for i in range(len(firstfile[table].columns)):
+	hdu.data.field(i)[(firstfilerows*k):(firstfilerows*(k+1))]=hdulist[table].data.field(i)
+    k = k + 1
+  hdu.header = firstfile[table].header
+  hdu.header.update('NAXIS2', nrows)
+  hdu.columns = firstfile[table].columns
+  hdu.writeto(outfile)
