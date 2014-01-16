@@ -405,13 +405,15 @@ def openObjectFile(filename, table='OBJECTS'):
 
     return openObjects(hdulist, table)
 
-def pasteCatalogs(infiles, outfile='out.cat', table='OBJECTS'):
+def pasteCatalogs(infiles, outfile='out.cat', table='OBJECTS', replace=False):
   """
   This function pastes several catalogs into one.
   
-  infiles contains all input catalogs, separated by a space
-  outfile is the filename of the output catalog, default is out.cat
-  table gives the table name that shall be used, default is OBJECTS
+  - infiles contains all input catalogs, separated by a space
+  - outfile is the filename of the output catalog, default is out.cat
+  - table gives the table name that shall be used, default is OBJECTS
+  - replace gives the information if an already existing file should be overritten if
+    it is already existing, default is False (no overwriting)
   
   Example:
   >>> ldac.pasteCatalogs('input1.cat input2.cat', outfile='outfile.cat', table='PSSC')
@@ -435,4 +437,4 @@ def pasteCatalogs(infiles, outfile='out.cat', table='OBJECTS'):
   hdu.header = firstfile[table].header
   hdu.header.update('NAXIS2', nrows)
   hdu.columns = firstfile[table].columns
-  hdu.writeto(outfile)
+  hdu.writeto(outfile, clobber=replace)
