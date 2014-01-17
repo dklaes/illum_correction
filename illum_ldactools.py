@@ -136,21 +136,23 @@ elif (action == 'UNIQUE_ELEMENTS'):
 elif (action == 'PASTE_CATALOGS'):
   ldac.pasteCatalogs(infile, outfile=outfile, table=table, replace=True)
 elif (action == 'CALCS_BEFORE_FITTING'):
+  # This action contains all calculations that have to be done before fitting.
   # The following argument have to within the "external" string in the following order:
   # zeropoint plus error, extinction coefficient plus error, color coefficient plus error,
   # colorname, filtername.
   calcs_before_fitting(infile, outfile, table, external, replace=True)
 elif (action == 'FILTER_PERCENT'):
+  # This action contains excluding a lower and upper percent part of the catalog.
   # The following argument have to within the "external" string in the following order:
-  # upperpercent, lowerpercent
+  # lowerpercent, upperpercent
   replace=True
   data = ldac.LDACCat(infile)[table]
   length = len(data)
   datasorted = np.sort(data[key])
   
-  upperpercent = float(external[0])
-  lowerpercent = float(external[1])
-  
+  lowerpercent = float(external[0])
+  upperpercent = float(external[1])
+    
   numberupper = int(length * upperpercent / 100.0)
   numberlower = int(length * lowerpercent / 100.0)
   
