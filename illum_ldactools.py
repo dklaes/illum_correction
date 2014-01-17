@@ -138,7 +138,6 @@ def calcs_after_fitting(infile, outfile, table, external, replace=False):
   reference = data[filtername]
   reference_err = data[filtername + '_err']
   data['Residual_fitted'] = Mag_fitted - reference
-  Residual_fitted = data['Residual_fitted']
   
   data['Residual_fitted_Err'] = np.sqrt((Mag_fitted_Err)**2 + (-reference_err)**2)
   
