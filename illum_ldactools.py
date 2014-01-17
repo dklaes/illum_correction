@@ -152,14 +152,14 @@ elif (action == 'FILTER_PERCENT'):
   
   lowerpercent = float(external[0])
   upperpercent = float(external[1])
-    
-  numberupper = int(length * upperpercent / 100.0)
-  numberlower = int(length * lowerpercent / 100.0)
   
-  uppervalue = datasorted[length-numberupper]
+  numberlower = int(length * lowerpercent / 100.0)
+  numberupper = int(length * upperpercent / 100.0)
+  
   lowervalue = datasorted[numberlower]
-
-  data2 = filter_elements(data, key, uppervalue, '<')
-  data3 = filter_elements(data2, key, lowervalue, '>')
+  uppervalue = datasorted[length-numberupper]
+  
+  data2 = filter_elements(data, key, lowervalue, '>')
+  data3 = filter_elements(data2, key, uppervalue, '<')
   
   data3.saveas(outfile, clobber=replace)
