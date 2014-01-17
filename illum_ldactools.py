@@ -163,3 +163,16 @@ elif (action == 'FILTER_PERCENT'):
   data3 = filter_elements(data2, key, uppervalue, '<')
   
   data3.saveas(outfile, clobber=replace)
+elif (action == 'FILTER_RESIDUAL'):
+  # The following argument have to within the "external" string in the following order:
+  # lowercutresabs, uppercutresabs
+  replace=True
+  data = ldac.LDACCat(infile)[table]
+  
+  lowercutresabs = float(external[0])
+  uppercutresabs = float(external[1])
+  
+  data2 = filter_elements(data, key, lowercutresabs, '>')
+  data3 = filter_elements(data2, key, uppercutresabs, '<')
+  
+  data3.saveas(outfile, clobber=replace)
