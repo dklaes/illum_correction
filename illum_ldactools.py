@@ -95,6 +95,59 @@ def calcs_before_fitting(infile, outfile, table, external, replace=False):
 
   data.saveas(outfile, clobber=replace)
 
+def calcs_after_fitting(infile, outfile, table, external, replace=False):
+  coeffs = {}
+
+  data = ldac.LDACCat(infile)[table]
+  coefffile = open(external[0],'r')
+
+  for line in coefffile:
+    entries = line.strip().split(" ")
+    coeffs[entries[0]] = float(entries[2])
+    coeffs[entries[0] + '_Err'] = float(entries[4])
+
+  F = np.array(data['CHIP'], dtype='float64')
+  F_Err = np.array(data['CHIP'], dtype='float64')
+  CHIP = data['CHIP']
+  
+  for i in np.unique(CHIP):
+    np.place(F, F==i, coeffs['F' + str(i)])
+    np.place(F_Err, F_Err==i, coeffs['F' + str(i) + '_Err'])
+
+  MagZP = data['MagZP']
+  A = coeffs['A']
+  B = coeffs['B']
+  C = coeffs['C']
+  D = coeffs['D']
+  E = coeffs['E']
+  X = data['Xpos_mod']
+  Y = data['Ypos_mod']
+  
+  data['Mag_fitted'] = MagZP - A*X**2 - B*Y**2 - C*X*Y - D*X - E*Y - F
+  Mag_fitted = data['Mag_fitted']
+  
+  A_Err = coeffs['A_Err']
+  B_Err = coeffs['B_Err']
+  C_Err = coeffs['C_Err']
+  D_Err = coeffs['D_Err']
+  E_Err = coeffs['E_Err']
+  MagZPErr = data['MagZPErr']
+  X_Err = 0.0 # not available yet -> data['Xpos_mod_Err']
+  Y_Err = 0.0 # not available yet -> data['Ypos_mod_Err']
+  data['Mag_fitted_Err'] = np.sqrt((MagZPErr)**2 + (-X**2 * A_Err)**2 + (-Y**2 * B_Err)**2 + (-X*Y*C_Err)**2 + (-X*D_Err)**2 + (-Y*E_Err)**2 + (-F_Err)**2 + ((-2.0*A*X - C*Y - D)*X_Err)**2 + ((-2.0*B*Y - C*X - E)*Y_Err)**2)
+  Mag_fitted_Err = data['Mag_fitted_Err']
+  
+  filtername = external[1]
+  reference = data[filtername]
+  reference_err = data[filtername + '_err']
+  data['Residual_fitted'] = Mag_fitted - reference
+  Residual_fitted = data['Residual_fitted']
+  
+  data['Residual_fitted_Err'] = np.sqrt((Mag_fitted_Err)**2 + (-reference_err)**2)
+  
+  data.saveas(outfile, clobber=replace)
+  
+
 
 opts, args = getopt.getopt(sys.argv[1:], "i:o:t:k:a:v:c:e:", ["input=", "output=", "table=", "key=", "action=", "value=", "condition=", "external="])
 
@@ -232,3 +285,11 @@ elif (action == 'FILTER_SIGMA'):
   data3 = filter_elements(data2, key, mean+sigmawidth*sigma, '<')
   
   data3.saveas(outfile, clobber=replace)
+elif (action == 'NUMBER_OF_ELEMENTS'):
+  data = ldac.LDACCat(infile)[table]
+  print(len(data))
+elif (action == 'CALCS_AFTER_FITTING'):
+  # This action contains all calculations that have to be done after fitting.
+  # The following argument have to within the "external" string in the following order:
+  # path and filename of file containing coefficients, filtername
+  calcs_after_fitting(infile, outfile, table, external, replace=True)
