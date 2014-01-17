@@ -142,6 +142,41 @@ def calcs_after_fitting(infile, outfile, table, external, replace=False):
   data['Residual_fitted_Err'] = np.sqrt((Mag_fitted_Err)**2 + (-reference_err)**2)
   
   data.saveas(outfile, clobber=replace)
+
+
+def statistics(infile, outfile, table):
+  output = {}
+  outputnames = ['mean', 'min', 'max', 'datapoints', 'variance', 'sigma']
+  
+  data = ldac.LDACCat(infile)[table]
+  
+  output['mean_before'] = np.mean(data['Residual'])
+  output['mean_after'] = np.mean(data['Residual_fitted'])
+  
+  output['min_before'] = np.amin(data['Residual'])
+  output['min_after'] = np.amin(data['Residual_fitted'])
+  
+  output['max_before'] = np.amax(data['Residual'])
+  output['max_after'] = np.amax(data['Residual_fitted'])
+  
+  output['datapoints_before'] = len(data['Residual'])
+  output['datapoints_after'] = len(data['Residual_fitted'])
+  
+  output['variance_before'] = np.var(data['Residual'])
+  output['variance_after'] = np.var(data['Residual_fitted'])
+  
+  output['sigma_before'] = np.std(data['Residual'])
+  output['sigma_after'] = np.std(data['Residual_fitted'])
+  
+  f = open(outfile, 'w')  
+  for name in outputnames:
+    if (name == 'datapoints'):
+      f.write("%s = %d %d\n" % (name, output[name + '_before'], output[name + '_after']))
+    else:
+      f.write("%s = %.5f %.5f\n" % (name, output[name + '_before'], output[name + '_after']))
+  f.close()
+  
+  
   
 
 
@@ -311,3 +346,7 @@ elif (action == 'CALCS_AFTER_FITTING'):
   # The following argument have to within the "external" string in the following order:
   # path and filename of file containing coefficients, filtername
   calcs_after_fitting(infile, outfile, table, external, replace=True)
+
+elif (action == 'STATISTICS'):
+  # This action contains all statistic calculations.
+  statistics(infile, outfile, table)
