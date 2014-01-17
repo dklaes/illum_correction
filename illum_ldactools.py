@@ -82,16 +82,12 @@ def calcs_before_fitting(infile, outfile, table, external, replace=False):
   MagZPErr = data['MagZPErr']
   
   data['Residual'] = MagZP - reference
-  Residual = data['Residual']
   
   data['Residual_Err'] = np.sqrt((MagZPErr)**2 + (-reference_err)**2)
-  Residual_Err = data['Residual_Err']
   
   data['Xpos_mod'] = 2.0*Xpos_global/PIXXMAX
-  Xpos_mod = data['Xpos_mod']
   
   data['Ypos_mod'] = 2.0*Ypos_global/PIXYMAX
-  Ypos_mod = data['Ypos_mod']
 
   data.saveas(outfile, clobber=replace)
 
