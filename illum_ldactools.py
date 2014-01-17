@@ -11,8 +11,7 @@ import getopt
 import ldac
 
 
-def filter_elements(infile, outfile, table, key, value, condition, replace=False):
-  data = ldac.LDACCat(infile)[table]
+def filter_elements(data, key, value, condition, replace=False):
   if (condition == '='):
     mask = (data[key]==value)
   elif (condition == '!='):
@@ -29,8 +28,8 @@ def filter_elements(infile, outfile, table, key, value, condition, replace=False
     print("Condition not recognized.")
     sys.exit(1)
 
-  data = data.filter(mask)
-  data.saveas(outfile, clobber=replace)
+  return data.filter(mask)
+  
 
 
 def unique_elements(infile, table, key):
@@ -40,8 +39,7 @@ def unique_elements(infile, table, key):
 
 def calcs_before_fitting(infile, outfile, table, external, replace=False):
   data = ldac.LDACCat(infile)[table]
-  print(external)
-  
+    
   # Getting all information for needed variables.
   # - Mag:     
   # - ZP:
@@ -129,7 +127,10 @@ PIXYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[
 
 
 if (action == 'FILTER_ELEMENTS'):
-  filter_elements(infile, outfile, table, key, value, condition, replace=True)
+  replace=True
+  data = ldac.LDACCat(infile)[table]
+  data2 = filter_elements(data, key, value, condition, replace=True)
+  data2.saveas(outfile, clobber=replace)
 elif (action == 'UNIQUE_ELEMENTS'):
   unique_elements(infile, table, key)
 elif (action == 'PASTE_CATALOGS'):
