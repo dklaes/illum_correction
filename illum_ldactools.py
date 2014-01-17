@@ -11,7 +11,7 @@ import getopt
 import ldac
 
 
-def filter_elements(data, key, value, condition, replace=False):
+def filter_elements(data, key, value, condition):
   if (condition == '='):
     mask = (data[key]==value)
   elif (condition == '!='):
@@ -129,7 +129,7 @@ PIXYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[
 if (action == 'FILTER_ELEMENTS'):
   replace=True
   data = ldac.LDACCat(infile)[table]
-  data2 = filter_elements(data, key, value, condition, replace=True)
+  data2 = filter_elements(data, key, value, condition)
   data2.saveas(outfile, clobber=replace)
 elif (action == 'UNIQUE_ELEMENTS'):
   unique_elements(infile, table, key)
@@ -140,3 +140,24 @@ elif (action == 'CALCS_BEFORE_FITTING'):
   # zeropoint plus error, extinction coefficient plus error, color coefficient plus error,
   # colorname, filtername.
   calcs_before_fitting(infile, outfile, table, external, replace=True)
+elif (action == 'FILTER_PERCENT'):
+  # The following argument have to within the "external" string in the following order:
+  # upperpercent, lowerpercent
+  replace=True
+  data = ldac.LDACCat(infile)[table]
+  length = len(data)
+  datasorted = np.sort(data[key])
+  
+  upperpercent = float(external[0])
+  lowerpercent = float(external[1])
+  
+  numberupper = int(length * upperpercent / 100.0)
+  numberlower = int(length * lowerpercent / 100.0)
+  
+  uppervalue = datasorted[length-numberupper]
+  lowervalue = datasorted[numberlower]
+
+  data2 = filter_elements(data, key, uppervalue, '<')
+  data3 = filter_elements(data2, key, lowervalue, '>')
+  
+  data3.saveas(outfile, clobber=replace)
