@@ -217,3 +217,18 @@ elif (action == 'FILTER_MAGNITUDE'):
   data3 = filter_elements(data2, key, uppercutmag, '<')
   
   data3.saveas(outfile, clobber=replace)
+elif (action == 'FILTER_SIGMA'):
+  # The following argument have to within the "external" string in the following order:
+  # sigmawidth
+  replace=True
+  data = ldac.LDACCat(infile)[table]
+  
+  sigmawidth = float(external[0])
+  
+  mean = np.mean(data[key])
+  sigma = np.sigma(data[key])
+  
+  data2 = filter_elements(data, key, mean-sigmawidth*sigma, '>')
+  data3 = filter_elements(data2, key, mean+sigmawidth*sigma, '<')
+  
+  data3.saveas(outfile, clobber=replace)
