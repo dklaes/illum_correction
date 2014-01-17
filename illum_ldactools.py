@@ -176,3 +176,18 @@ elif (action == 'FILTER_RESIDUAL'):
   data3 = filter_elements(data2, key, uppercutresabs, '<')
   
   data3.saveas(outfile, clobber=replace)
+elif (action == 'FILTER_RESIDUALMEAN'):
+  # The following argument have to within the "external" string in the following order:
+  # lowercutresmean, uppercutresmean
+  replace=True
+  data = ldac.LDACCat(infile)[table]
+  
+  lowercutresmean = float(external[0])
+  uppercutresmean = float(external[1])
+  
+  mean = np.mean(data[key])
+  
+  data2 = filter_elements(data, key, lowercutresmean+mean, '>')
+  data3 = filter_elements(data2, key, uppercutresmean+mean, '<')
+  
+  data3.saveas(outfile, clobber=replace)
