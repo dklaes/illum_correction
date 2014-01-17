@@ -29,13 +29,13 @@ def filter_elements(data, key, value, condition):
     sys.exit(1)
 
   return data.filter(mask)
-  
 
 
 def unique_elements(infile, table, key):
   data = ldac.LDACCat(infile)[table]
   unique = np.unique(data[key])
   print(str(unique)[1:-1])
+
 
 def calcs_before_fitting(infile, outfile, table, external, replace=False):
   data = ldac.LDACCat(infile)[table]
@@ -94,6 +94,7 @@ def calcs_before_fitting(infile, outfile, table, external, replace=False):
   Ypos_mod = data['Ypos_mod']
 
   data.saveas(outfile, clobber=replace)
+
 
 def calcs_after_fitting(infile, outfile, table, external, replace=False):
   coeffs = {}
@@ -184,16 +185,24 @@ if (action == 'FILTER_ELEMENTS'):
   data = ldac.LDACCat(infile)[table]
   data2 = filter_elements(data, key, value, condition)
   data2.saveas(outfile, clobber=replace)
+
+
 elif (action == 'UNIQUE_ELEMENTS'):
   unique_elements(infile, table, key)
+
+
 elif (action == 'PASTE_CATALOGS'):
   ldac.pasteCatalogs(infile, outfile=outfile, table=table, replace=True)
+
+
 elif (action == 'CALCS_BEFORE_FITTING'):
   # This action contains all calculations that have to be done before fitting.
   # The following argument have to within the "external" string in the following order:
   # zeropoint plus error, extinction coefficient plus error, color coefficient plus error,
   # colorname, filtername.
   calcs_before_fitting(infile, outfile, table, external, replace=True)
+
+
 elif (action == 'FILTER_PERCENT'):
   # This action contains excluding a lower and upper percent part of the catalog.
   # The following argument have to within the "external" string in the following order:
@@ -216,6 +225,8 @@ elif (action == 'FILTER_PERCENT'):
   data3 = filter_elements(data2, key, uppervalue, '<')
   
   data3.saveas(outfile, clobber=replace)
+
+
 elif (action == 'FILTER_RESIDUAL'):
   # The following argument have to within the "external" string in the following order:
   # lowercutresabs, uppercutresabs
@@ -229,6 +240,8 @@ elif (action == 'FILTER_RESIDUAL'):
   data3 = filter_elements(data2, key, uppercutresabs, '<')
   
   data3.saveas(outfile, clobber=replace)
+
+
 elif (action == 'FILTER_RESIDUALMEAN'):
   # The following argument have to within the "external" string in the following order:
   # lowercutresmean, uppercutresmean
@@ -244,6 +257,8 @@ elif (action == 'FILTER_RESIDUALMEAN'):
   data3 = filter_elements(data2, key, uppercutresmean+mean, '<')
   
   data3.saveas(outfile, clobber=replace)
+
+
 elif (action == 'FILTER_RESIDUAL'):
   # The following argument have to within the "external" string in the following order:
   # lowercutresabs, uppercutresabs
@@ -257,6 +272,8 @@ elif (action == 'FILTER_RESIDUAL'):
   data3 = filter_elements(data2, key, uppercutresabs, '<')
   
   data3.saveas(outfile, clobber=replace)
+
+
 elif (action == 'FILTER_MAGNITUDE'):
   # The following argument have to within the "external" string in the following order:
   # lowercutmag, uppercutmag
@@ -270,6 +287,8 @@ elif (action == 'FILTER_MAGNITUDE'):
   data3 = filter_elements(data2, key, uppercutmag, '<')
   
   data3.saveas(outfile, clobber=replace)
+
+
 elif (action == 'FILTER_SIGMA'):
   # The following argument have to within the "external" string in the following order:
   # sigmawidth
@@ -285,9 +304,13 @@ elif (action == 'FILTER_SIGMA'):
   data3 = filter_elements(data2, key, mean+sigmawidth*sigma, '<')
   
   data3.saveas(outfile, clobber=replace)
+
+
 elif (action == 'NUMBER_OF_ELEMENTS'):
   data = ldac.LDACCat(infile)[table]
   print(len(data))
+
+
 elif (action == 'CALCS_AFTER_FITTING'):
   # This action contains all calculations that have to be done after fitting.
   # The following argument have to within the "external" string in the following order:
