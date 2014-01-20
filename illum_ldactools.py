@@ -69,7 +69,7 @@ def calcs_before_fitting(infile, outfile, table, external, replace=False):
   data[colorname + '_err'] = np.sqrt((COLOR1ERR)**2 + (COLOR2ERR)**2)
   COLORERR = data[colorname + '_err']
   
-  filtername = external[7]
+  filtername = external[7] + 'mag'
   reference = data[filtername]
   reference_err = data[filtername + '_err']
   Xpos_global = data['Xpos_global']
@@ -369,7 +369,8 @@ opts, args = getopt.getopt(sys.argv[1:], "i:o:t:k:a:v:c:e:", ["input=", "output=
 infile = outfile = table = key = action = test = value = condition = external = None
 for o, a in opts:
     if o in ("-i"):
-        infile = a
+        #infile = a
+        infile = a.split()
     elif o in ("-o"):
         outfile = a
     elif o in ("-t"):
@@ -395,13 +396,13 @@ PIXYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[
 
 if (action == 'FILTER_ELEMENTS'):
   replace=True
-  data = ldac.LDACCat(infile)[table]
+  data = ldac.LDACCat(infile[0])[table]
   data2 = filter_elements(data, key, value, condition)
   data2.saveas(outfile, clobber=replace)
 
 
 elif (action == 'UNIQUE_ELEMENTS'):
-  unique_elements(infile, table, key)
+  unique_elements(infile[0], table, key)
 
 
 elif (action == 'PASTE_CATALOGS'):
@@ -413,7 +414,7 @@ elif (action == 'CALCS_BEFORE_FITTING'):
   # The following argument have to within the "external" string in the following order:
   # zeropoint plus error, extinction coefficient plus error, color coefficient plus error,
   # colorname, filtername.
-  calcs_before_fitting(infile, outfile, table, external, replace=True)
+  calcs_before_fitting(infile[0], outfile, table, external, replace=True)
 
 
 elif (action == 'FILTER_PERCENT'):
@@ -421,7 +422,7 @@ elif (action == 'FILTER_PERCENT'):
   # The following argument have to within the "external" string in the following order:
   # lowerpercent, upperpercent
   replace=True
-  data = ldac.LDACCat(infile)[table]
+  data = ldac.LDACCat(infile[0])[table]
   length = len(data)
   datasorted = np.sort(data[key])
   
@@ -444,7 +445,7 @@ elif (action == 'FILTER_RESIDUAL'):
   # The following argument have to within the "external" string in the following order:
   # lowercutresabs, uppercutresabs
   replace=True
-  data = ldac.LDACCat(infile)[table]
+  data = ldac.LDACCat(infile[0])[table]
   
   lowercutresabs = float(external[0])
   uppercutresabs = float(external[1])
@@ -459,7 +460,7 @@ elif (action == 'FILTER_RESIDUALMEAN'):
   # The following argument have to within the "external" string in the following order:
   # lowercutresmean, uppercutresmean
   replace=True
-  data = ldac.LDACCat(infile)[table]
+  data = ldac.LDACCat(infile[0])[table]
   
   lowercutresmean = float(external[0])
   uppercutresmean = float(external[1])
@@ -476,7 +477,7 @@ elif (action == 'FILTER_RESIDUAL'):
   # The following argument have to within the "external" string in the following order:
   # lowercutresabs, uppercutresabs
   replace=True
-  data = ldac.LDACCat(infile)[table]
+  data = ldac.LDACCat(infile[0])[table]
   
   lowercutresabs = float(external[0])
   uppercutresabs = float(external[1])
@@ -491,7 +492,7 @@ elif (action == 'FILTER_MAGNITUDE'):
   # The following argument have to within the "external" string in the following order:
   # lowercutmag, uppercutmag
   replace=True
-  data = ldac.LDACCat(infile)[table]
+  data = ldac.LDACCat(infile[0])[table]
   
   lowercutmag = float(external[0])
   uppercutmag = float(external[1])
@@ -506,12 +507,12 @@ elif (action == 'FILTER_SIGMA'):
   # The following argument have to within the "external" string in the following order:
   # sigmawidth
   replace=True
-  data = ldac.LDACCat(infile)[table]
+  data = ldac.LDACCat(infile[0])[table]
   
   sigmawidth = float(external[0])
   
   mean = np.mean(data[key])
-  sigma = np.sigma(data[key])
+  sigma = np.std(data[key])
   
   data2 = filter_elements(data, key, mean-sigmawidth*sigma, '>')
   data3 = filter_elements(data2, key, mean+sigmawidth*sigma, '<')
@@ -520,7 +521,7 @@ elif (action == 'FILTER_SIGMA'):
 
 
 elif (action == 'NUMBER_OF_ELEMENTS'):
-  data = ldac.LDACCat(infile)[table]
+  data = ldac.LDACCat(infile[0])[table]
   print(len(data))
 
 
@@ -528,7 +529,7 @@ elif (action == 'CALCS_AFTER_FITTING'):
   # This action contains all calculations that have to be done after fitting.
   # The following argument have to within the "external" string in the following order:
   # path and filename of file containing coefficients, filtername
-  calcs_after_fitting(infile, outfile, table, external, replace=True)
+  calcs_after_fitting(infile[0], outfile, table, external, replace=True)
 
 elif (action == 'STATISTICS'):
   # This action contains all statistic calculations.
@@ -563,4 +564,25 @@ elif (action == 'STATISTICS'):
 
   coordinates = coordinates.reshape((-1,4))
   
-  statistics(infile, outfile, table, external, coordinates)
+  statistics(infile[0], outfile, table, external, coordinates)
+
+elif (action == 'FILTER_USUABLE'):
+  # This action contains all calculations that have to be done after fitting.
+  # The following argument have to within the "external" string in the following order:
+  # filtername, colorname
+  replace=True
+  data = ldac.LDACCat(infile[0])[table]
+  
+  filtername = external[0] + 'mag'
+  colorname = external[1]
+  color1 = colorname[0] + 'mag'
+  color2 = colorname[2] + 'mag'
+  
+  data2 = filter_elements(data, filtername, 99, '<')
+  data3 = filter_elements(data2, filtername, -9999, '>')
+  data4 = filter_elements(data3, color1, 99, '<')
+  data5 = filter_elements(data4, color1, -9999, '>')
+  data6 = filter_elements(data5, color2, 99, '<')
+  data7 = filter_elements(data6, color2, -9999, '>')
+    
+  data7.saveas(outfile, clobber=replace)
