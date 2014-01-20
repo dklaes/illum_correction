@@ -409,26 +409,26 @@ def pasteCatalogs(infiles, outfile='out.cat', table='OBJECTS', replace=False):
   """
   This function pastes several catalogs into one.
   
-  - infiles contains all input catalogs, separated by a space
+  - infiles contains all input catalogs as a list
   - outfile is the filename of the output catalog, default is out.cat
   - table gives the table name that shall be used, default is OBJECTS
   - replace gives the information if an already existing file should be overritten if
     it is already existing, default is False (no overwriting)
   
   Example:
-  >>> ldac.pasteCatalogs('input1.cat input2.cat', outfile='outfile.cat', table='PSSC')
+  >>> ldac.pasteCatalogs(['input1.cat', 'input2.cat'], outfile='outfile.cat', table='PSSC')
   """
   
   nrows = 0
-  firstfile = pyfits.open(infiles.split(' ')[0])
+  firstfile = pyfits.open(infiles[0])
   firstfilerows = firstfile[table].data.shape[0]
-  for file in infiles.split(' '):
+  for file in infiles:
     nextfile = pyfits.open(file)
     nrows = nrows + nextfile[table].data.shape[0]
   hdu = pyfits.new_table(firstfile[table].columns, nrows=nrows)
   
   position=0
-  for file in infiles.split(' '):
+  for file in infiles:
     hdulist = pyfits.open(file)
     filerows = hdulist[table].data.shape[0]
     for i in range(len(firstfile[table].columns)):
