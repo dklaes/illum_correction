@@ -385,10 +385,8 @@ for o, a in opts:
 global PIXXMAX
 global PIXYMAX
 #Reading chip geometry from config file
-#PIXXMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $1}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $3}'").readlines())[0])
-#PIXYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $4}'").readlines())[0])
-PIXXMAX = 16320
-PIXYMAX = 16200
+PIXXMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $1}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $3}'").readlines())[0])
+PIXYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $4}'").readlines())[0])
 
 
 
@@ -539,18 +537,14 @@ elif (action == 'STATISTICS'):
   global LR
   global UL
   global UR
-  CHIPXMAX = 2040 #int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $3}'").readlines())[0])
-  CHIPYMAX = 4050 #int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $4}'").readlines())[0])
-  MAXCHIPX = 8 #int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $1}'").readlines())[0])
-  MAXCHIPY = 4 #int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[0])
-  #LL = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $1}'").readlines())[0]), int((os.popen("echo ${OFFSETY} | awk '{print $1}'").readlines())[0])])
-  LL = np.array([-8552, -8583])
-  #LR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $1}'").readlines())[0])])
-  LR = np.array([8472, -8583])
-  #UL = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $1}'").readlines())[0]), int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
-  UL = np.array([-8552, 8430])
-  #UR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
-  UR = np.array([8472, 8430])
+  CHIPXMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $3}'").readlines())[0])
+  CHIPYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $4}'").readlines())[0])
+  MAXCHIPX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $1}'").readlines())[0])
+  MAXCHIPY = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[0])
+  LL = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $1}'").readlines())[0]), int((os.popen("echo ${OFFSETY} | awk '{print $1}'").readlines())[0])])
+  LR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $1}'").readlines())[0])])
+  UL = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $1}'").readlines())[0]), int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
+  UR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
   
   coordinates = np.array([])
   # Bottom left part of the camera
