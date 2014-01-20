@@ -226,6 +226,7 @@ def calculate_ellipse(coordinates, prefactors, center):
 
   maxdistancefinal = np.amax(maxdistance)
   areafinal = np.sum(area)
+  areafinal_percent = float(areafinal) / (CHIPXMAX * CHIPYMAX * MAXCHIPX *  MAXCHIPY)
 
   # Length of major axis:
   a = np.amax(maxdistancefinal)
@@ -241,7 +242,7 @@ def calculate_ellipse(coordinates, prefactors, center):
   # Angle between (0,y) and major axis:
   angle = np.arcsin((Xmax-centerx)/maxdistancefinal) * 180 / np.pi
 
-  return(a, b, e, nume, angle, areafinal)
+  return(a, b, e, nume, angle, areafinal, areafinal_percent)
 
 
 
@@ -338,7 +339,8 @@ def statistics(infile, outfile, table, external, coordinates):
   output['ellipse_e'] = result_ellipse[2]
   output['ellipse_nume'] = result_ellipse[3]
   output['ellipse_angle'] = result_ellipse[4]
-  output['ellipse_area'] = result_ellipse[5]
+  output['ellipse_area_number'] = result_ellipse[5]
+  output['ellipse_area_percent'] = result_ellipse[6]
   
   f = open(outfile, 'w')  
   for name in outputnames:
@@ -352,7 +354,8 @@ def statistics(infile, outfile, table, external, coordinates):
       f.write("%s %.5f 0.0\n" % (name + '_e', output[name + '_e']))
       f.write("%s %.5f 0.0\n" % (name + '_nume', output[name + '_nume']))
       f.write("%s %.5f 0.0\n" % (name + '_angle', output[name + '_angle']))
-      f.write("%s %d 0\n" % (name + '_area', output[name + '_area']))
+      f.write("%s %d 0\n" % (name + '_area_number', output[name + '_area_number']))
+      f.write("%s %.5f 0.0\n" % (name + '_area_percent', output[name + '_area_percent']))
     else:
       f.write("%s %.5f %.5f\n" % (name, output[name + '_before'], output[name + '_after']))
   f.close()
@@ -533,6 +536,8 @@ elif (action == 'STATISTICS'):
   # path and filename of file containing coefficients
   global CHIPXMAX
   global CHIPYMAX
+  global MAXCHIPX
+  global MAXCHIPY
   global LL
   global LR
   global UL
