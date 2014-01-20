@@ -144,9 +144,111 @@ def calcs_after_fitting(infile, outfile, table, external, replace=False):
   data.saveas(outfile, clobber=replace)
 
 
-def statistics(infile, outfile, table):
+
+
+
+
+
+
+# Analysis of ellipse shape
+def calculate_ellipse(coordinates, prefactors, center):  
+  # Getting the prefactors and calculate the center position.
+  A = prefactors[0]
+  B = prefactors[1]
+  C = prefactors[2]
+  D = prefactors[3]
+  E = prefactors[4]
+
+  centerx = center[0]
+  centery = center[1]
+
+  maxdistance = np.array([])
+  area = np.array([])
+  x = np.array([])
+  y = np.array([])
+  eps = np.array([])
+
+  # Creating arrays for xred (reduced and resized chip coordinates (for plotting and
+  # numerical reasons)) and X (reduced (for plotting)). Having xred and X seperated doesn't
+  # cause the problem of transforming the prefactors to the other coordinate system!
+  # As soon as possible not longer needed arrays are deleted from memory, otherwise too much
+  # memory is occupied.
+
+  for k in range(len(coordinates)):
+	xred = 2.0*(np.arange(coordinates[k][0], coordinates[k][1], 1))/PIXXMAX
+	yred = 2.0*(np.arange(coordinates[k][2], coordinates[k][3], 1))/PIXYMAX
+
+	# Creating the corresponding meshgrids.
+	xxred, yyred = np.meshgrid(xred, yred)
+	del xred
+	del yred
+	# Calculating the position dependend residuals.
+	# - epswoZP:		residuals without chip zeropoints in resized chip coordinates (reduced data set),
+	#			for plotting
+	epswoZP = (A * xxred**2 + B * yyred**2 + C * xxred * yyred + D * xxred + E * yyred).flatten()
+	del xxred
+	del yyred
+
+	cond=((epswoZP)>-0.015)
+	X = np.arange(coordinates[k][0], coordinates[k][1], 1)
+	Y = np.arange(coordinates[k][2], coordinates[k][3], 1)
+	XX, YY = np.meshgrid(X, Y)
+	del X
+	del Y
+	XXcond = (XX.flatten())[cond]
+	del XX
+	YYcond = (YY.flatten())[cond]
+	del YY
+	epscond = (epswoZP)[cond]
+	del epswoZP
+	del cond
+
+	cond2=(epscond.flatten())<0.0
+	XXcond2 = (XXcond.flatten())[cond2]
+	del XXcond
+	YYcond2 = (YYcond.flatten())[cond2]
+	del YYcond
+	epscond2 = (epscond.flatten())[cond2]
+	del epscond
+	del cond2
+
+	distance = np.sqrt(XXcond2*XXcond2+YYcond2*YYcond2)
+	maxdistance = np.append(maxdistance, np.amax(distance))
+	area = np.append(area, len(epscond2.flatten()))
+
+	x = np.append(x, XXcond2[distance==maxdistance[k]])
+	y = np.append(y, YYcond2[distance==maxdistance[k]])
+	eps = np.append(eps, epscond2[distance==maxdistance[k]])
+
+	del XXcond2
+	del YYcond2
+	del epscond2
+
+  maxdistancefinal = np.amax(maxdistance)
+  areafinal = np.sum(area)
+
+  # Length of major axis:
+  a = np.amax(maxdistancefinal)
+  # Length of minor axis:
+  b = areafinal / (np.pi * a)
+  # Ellipticity:
+  e = np.sqrt(a*a-b*b)
+  # Numerical ellipticity:
+  nume = e/a
+
+  Xmax = x[maxdistance == maxdistancefinal][0]
+  Ymax = y[maxdistance == maxdistancefinal][0]
+  # Angle between (0,y) and major axis:
+  angle = np.arcsin((Xmax-centerx)/maxdistancefinal) * 180 / np.pi
+
+  return(a, b, e, nume, angle, areafinal)
+
+
+
+
+def statistics(infile, outfile, table, external, coordinates):
   output = {}
-  outputnames = ['mean', 'min', 'max', 'datapoints', 'variance', 'sigma']
+  outputnames = ['mean', 'min', 'max', 'datapoints', 'variance', 'sigma', 'compatible_with_zero_number', 'compatible_with_zero_percent', 'center_x', 'center_y', 'ellipse']
   
   data = ldac.LDACCat(infile)[table]
   
@@ -168,12 +270,91 @@ def statistics(infile, outfile, table):
   output['sigma_before'] = np.std(data['Residual'])
   output['sigma_after'] = np.std(data['Residual_fitted'])
   
+  # Compatible with a residual of zero:
+  a = np.abs(data['Residual'])
+  b = np.abs(data['Residual_Err'])
+  c = a - b
+  mask = (c<=0.0)
+  result = data.filter(mask)
+  output['compatible_with_zero_number_before'] = len(result)
+  output['compatible_with_zero_percent_before'] = float(len(result)) / len(a)
+    
+  a = np.abs(data['Residual_fitted'])
+  b = np.abs(data['Residual_fitted_Err'])
+  c = a - b
+  mask = (c<=0.0)
+  result = data.filter(mask)
+  output['compatible_with_zero_number_after'] = len(result)
+  output['compatible_with_zero_percent_after'] = float(len(result)) / len(a)
+  
+  # Center position
+  coeffs = {}
+
+  data = ldac.LDACCat(infile)[table]
+  coefffile = open(external[0],'r')
+
+  for line in coefffile:
+    entries = line.strip().split(" ")
+    coeffs[entries[0]] = float(entries[2])
+    coeffs[entries[0] + '_Err'] = float(entries[4])
+  
+  A = coeffs['A']
+  B = coeffs['B']
+  C = coeffs['C']
+  D = coeffs['D']
+  E = coeffs['E']
+  
+  output['center_x'] = ((C*E-2.0*B*D)/(4.0*A*B-C**2))*PIXXMAX/2.0
+  output['center_y'] = ((2.0*A*E-C*D)/(C**2-4.0*A*B))*PIXYMAX/2.0
+  center = [output['center_x'], output['center_y']]
+  
+  A_Err = coeffs['A_Err']
+  B_Err = coeffs['B_Err']
+  C_Err = coeffs['C_Err']
+  D_Err = coeffs['D_Err']
+  E_Err = coeffs['E_Err']
+  
+  delcenterx_delA = (4.0*B*(2.0*B*D-C*E))/((C**2-4.0*A*B)**2)
+  delcenterx_delB = (2.0*C*(C*D-2.0*A*E))/((C**2-4.0*A*B)**2)
+  delcenterx_delC = (4.0*A*B*E-4.0*B*C*D+(C**2)*E)/((C**2+4.0*A*B)**2)
+  delcenterx_delD = -(2.0*B)/(4.0*A*B-C**2)
+  delcenterx_delE = C/(4.0*A*B-C**2)
+  
+  output['center_x_Err'] = np.sqrt((delcenterx_delA * A_Err)**2 + (delcenterx_delB * B_Err)**2 + (delcenterx_delC * C_Err)**2 + (delcenterx_delD * D_Err)**2 + (delcenterx_delE * E_Err)**2)
+  
+  
+  delcentery_delA = (2.0*C*(C*E-2.0*B*D))/((C**2-4.0*A*B)**2)
+  delcentery_delB = (4.0*A*(2.0*A*E-C*D))/((C**2-4.0*A*B)**2)
+  delcentery_delC = (4.0*A*B*D-4.0*A*C*E+(C**2)*D)/((C**2-4.0*A*B)**2)
+  delcentery_delD = C/(4.0*A*B-C**2)
+  delcentery_delE = (2.0*A)/(C**2-4.0*A*B)
+  
+  output['center_y_Err'] = np.sqrt((delcentery_delA * A_Err)**2 + (delcentery_delB * B_Err)**2 + (delcentery_delC * C_Err)**2 + (delcentery_delD * D_Err)**2 + (delcentery_delE * E_Err)**2)
+  
+  # Calculating properties of the ellipse:
+  result_ellipse = calculate_ellipse(coordinates, [A, B, C, D, E], center)
+  output['ellipse_a'] = result_ellipse[0]
+  output['ellipse_b'] = result_ellipse[1]
+  output['ellipse_e'] = result_ellipse[2]
+  output['ellipse_nume'] = result_ellipse[3]
+  output['ellipse_angle'] = result_ellipse[4]
+  output['ellipse_area'] = result_ellipse[5]
+  
   f = open(outfile, 'w')  
   for name in outputnames:
-    if (name == 'datapoints'):
-      f.write("%s = %d %d\n" % (name, output[name + '_before'], output[name + '_after']))
+    if (name == 'datapoints') | (name == 'compatible_with_zero_number'):
+      f.write("%s %d %d\n" % (name, output[name + '_before'], output[name + '_after']))
+    elif (name == 'center_x') | (name == 'center_y'):
+      f.write("%s %.5f %.5f\n" % (name, output[name], output[name + '_Err']))
+    elif (name == 'ellipse'):
+      f.write("%s %.5f 0.0\n" % (name + '_a', output[name + '_a']))
+      f.write("%s %.5f 0.0\n" % (name + '_b', output[name + '_b']))
+      f.write("%s %.5f 0.0\n" % (name + '_e', output[name + '_e']))
+      f.write("%s %.5f 0.0\n" % (name + '_nume', output[name + '_nume']))
+      f.write("%s %.5f 0.0\n" % (name + '_angle', output[name + '_angle']))
+      f.write("%s %d 0\n" % (name + '_area', output[name + '_area']))
     else:
-      f.write("%s = %.5f %.5f\n" % (name, output[name + '_before'], output[name + '_after']))
+      f.write("%s %.5f %.5f\n" % (name, output[name + '_before'], output[name + '_after']))
   f.close()
   
   
@@ -204,9 +385,10 @@ for o, a in opts:
 global PIXXMAX
 global PIXYMAX
 #Reading chip geometry from config file
-PIXXMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $1}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $3}'").readlines())[0])
-PIXYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $4}'").readlines())[0])
-
+#PIXXMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $1}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $3}'").readlines())[0])
+#PIXYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $4}'").readlines())[0])
+PIXXMAX = 16320
+PIXYMAX = 16200
 
 
 
@@ -349,4 +531,37 @@ elif (action == 'CALCS_AFTER_FITTING'):
 
 elif (action == 'STATISTICS'):
   # This action contains all statistic calculations.
-  statistics(infile, outfile, table)
+  # The following argument have to within the "external" string in the following order:
+  # path and filename of file containing coefficients
+  global CHIPXMAX
+  global CHIPYMAX
+  global LL
+  global LR
+  global UL
+  global UR
+  CHIPXMAX = 2040 #int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $3}'").readlines())[0])
+  CHIPYMAX = 4050 #int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $4}'").readlines())[0])
+  MAXCHIPX = 8 #int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $1}'").readlines())[0])
+  MAXCHIPY = 4 #int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[0])
+  #LL = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $1}'").readlines())[0]), int((os.popen("echo ${OFFSETY} | awk '{print $1}'").readlines())[0])])
+  LL = np.array([-8552, -8583])
+  #LR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $1}'").readlines())[0])])
+  LR = np.array([8472, -8583])
+  #UL = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $1}'").readlines())[0]), int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
+  UL = np.array([-8552, 8430])
+  #UR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
+  UR = np.array([8472, 8430])
+  
+  coordinates = np.array([])
+  # Bottom left part of the camera
+  coordinates = np.append(coordinates, (LL[0],0,LL[1],0))
+  # Bottom right part of the camera.
+  coordinates = np.append(coordinates, (0,LR[0],LR[1],0))
+  # Upper left part of the camera.
+  coordinates = np.append(coordinates, (UL[0],0,0,UL[1]))
+  # Upper right part of the camera.
+  coordinates = np.append(coordinates, (0,UR[0],0,UR[1]))
+
+  coordinates = coordinates.reshape((-1,4))
+  
+  statistics(infile, outfile, table, external, coordinates)
