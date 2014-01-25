@@ -50,26 +50,43 @@ def calcs_before_fitting(infile, outfile, table, external, replace=False):
   Mag = data['Mag']
   MagErr = data['MagErr']
   
-  ZP = float(external[0])
-  ZPERR = float(external[1])
+  coeffs = {}
+  coefffile = open(external[0],'r')
+
+  i=1
+  for line in coefffile:
+    entries = line.strip().split(" ")
+    coeffs['ZP' + str(i)] = float(entries[0])
+    coeffs['EXT' + str(i)] = float(entries[1])
+    coeffs['COLCOEFF' + str(i)] = float(entries[2])
+    coeffs['ZPERR' + str(i)] = float(entries[3])
+    coeffs['EXTERR' + str(i)] = float(entries[4])
+    coeffs['COLCOEFFERR' + str(i)] = float(entries[5])
+    i = i + 1
+
+  f.close()
+
+  solution = int(external[1])
+  ZP = coeffs['ZP' + str(solution)] #float(external[0])
+  ZPERR = coeffs['ZPERR' + str(solution)] #float(external[1])
   
-  EXT = float(external[2])
-  EXTERR = float(external[3])
+  EXT = coeffs['EXT' + str(solution)] #float(external[2])
+  EXTERR = coeffs['EXTERR' + str(solution)] #float(external[3])
   
   AIRMASS = data['AIRMASS']
   AIRMASSERR = 0.0 # not available
   
-  COLCOEFF = float(external[4])
-  COLCOEFFERR = float(external[5])
+  COLCOEFF = coeffs['COLCOEFF' + str(solution)] #float(external[4])
+  COLCOEFFERR = coeffs['COLCOEFFERR' + str(solution)] #float(external[5])
   
-  colorname = external[6]
+  colorname = external[2]
   COLOR = data[colorname]
   COLOR1ERR = data[colorname[0] + "mag_err"]
   COLOR2ERR = data[colorname[2] + "mag_err"]
   data[colorname + '_err'] = np.sqrt((COLOR1ERR)**2 + (COLOR2ERR)**2)
   COLORERR = data[colorname + '_err']
   
-  filtername = external[7] + 'mag'
+  filtername = external[3] + 'mag'
   reference = data[filtername]
   reference_err = data[filtername + '_err']
   Xpos_global = data['Xpos_global']
@@ -135,8 +152,8 @@ def calcs_after_fitting(infile, outfile, table, external, replace=False):
   Mag_fitted_Err = data['Mag_fitted_Err']
   
   filtername = external[1]
-  reference = data[filtername]
-  reference_err = data[filtername + '_err']
+  reference = data[filtername + 'mag']
+  reference_err = data[filtername + 'mag_err']
   data['Residual_fitted'] = Mag_fitted - reference
   
   data['Residual_fitted_Err'] = np.sqrt((Mag_fitted_Err)**2 + (-reference_err)**2)
@@ -250,8 +267,58 @@ def calculate_ellipse(coordinates, prefactors, center):
 def statistics(infile, outfile, table, external, coordinates):
   output = {}
   outputnames = ['mean', 'min', 'max', 'datapoints', 'variance', 'sigma', 'compatible_with_zero_number', 'compatible_with_zero_percent', 'center_x', 'center_y', 'ellipse']
+  outputnames_chip = ['mean', 'min', 'max', 'datapoints', 'variance', 'sigma', 'compatible_with_zero_number', 'compatible_with_zero_percent']
   
   data = ldac.LDACCat(infile)[table]
+  
+  for i in range(NUMCHIPS):
+    output_chip = {}
+    data_chip = filter_elements(data, 'CHIP', i+1, "=")
+    
+    output_chip['mean_before'] = np.mean(data_chip['Residual'])
+    output_chip['mean_after'] = np.mean(data_chip['Residual_fitted'])
+    
+    output_chip['min_before'] = np.amin(data_chip['Residual'])
+    output_chip['min_after'] = np.amin(data_chip['Residual_fitted'])
+    
+    output_chip['max_before'] = np.amax(data_chip['Residual'])
+    output_chip['max_after'] = np.amax(data_chip['Residual_fitted'])
+    
+    output_chip['datapoints_before'] = len(data_chip['Residual'])
+    output_chip['datapoints_after'] = len(data_chip['Residual_fitted'])
+    
+    output_chip['variance_before'] = np.var(data_chip['Residual'])
+    output_chip['variance_after'] = np.var(data_chip['Residual_fitted'])
+    
+    output_chip['sigma_before'] = np.std(data_chip['Residual'])
+    output_chip['sigma_after'] = np.std(data_chip['Residual_fitted'])
+  
+    # Compatible with a residual of zero:
+    a = np.abs(data_chip['Residual'])
+    b = np.abs(data_chip['Residual_Err'])
+    c = a - b
+    mask = (c<=0.0)
+    result = data_chip.filter(mask)
+    output_chip['compatible_with_zero_number_before'] = len(result)
+    output_chip['compatible_with_zero_percent_before'] = float(len(result)) / len(a)
+      
+    a = np.abs(data_chip['Residual_fitted'])
+    b = np.abs(data_chip['Residual_fitted_Err'])
+    c = a - b
+    mask = (c<=0.0)
+    result = data_chip.filter(mask)
+    output_chip['compatible_with_zero_number_after'] = len(result)
+    output_chip['compatible_with_zero_percent_after'] = float(len(result)) / len(a)
+    
+    outfile_chip = outfile[:outfile.rfind(".")] + '_' + str(i) + outfile[outfile.rfind("."):]
+    f = open(outfile, 'w')  
+    for name in outputnames_chip:
+      if (name == 'datapoints') | (name == 'compatible_with_zero_number'):
+	f.write("%s %d %d\n" % (name, output_chip[name + '_before'], output_chip[name + '_after']))
+      else:
+	f.write("%s %.5f %.5f\n" % (name, output_chip[name + '_before'], output_chip[name + '_after']))
+    f.close()
+  
   
   output['mean_before'] = np.mean(data['Residual'])
   output['mean_after'] = np.mean(data['Residual_fitted'])
@@ -366,10 +433,9 @@ def statistics(infile, outfile, table, external, coordinates):
 
 opts, args = getopt.getopt(sys.argv[1:], "i:o:t:k:a:v:c:e:", ["input=", "output=", "table=", "key=", "action=", "value=", "condition=", "external="])
 
-infile = outfile = table = key = action = test = value = condition = external = None
+infile = outfile = table = key = action = value = condition = external = None
 for o, a in opts:
     if o in ("-i"):
-        #infile = a
         infile = a.split()
     elif o in ("-o"):
         outfile = a
@@ -388,9 +454,11 @@ for o, a in opts:
 
 global PIXXMAX
 global PIXYMAX
+global NUMCHIPS
 #Reading chip geometry from config file
 PIXXMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $1}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $3}'").readlines())[0])
 PIXYMAX = int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $2}'").readlines())[0]) * int((os.popen("echo ${CHIPGEOMETRY} | awk '{print $4}'").readlines())[0])
+NUMCHIPS = int((os.popen("echo ${NCHIPS} | awk '{print $1}'").readlines())[0])
 
 
 
@@ -412,8 +480,8 @@ elif (action == 'PASTE_CATALOGS'):
 elif (action == 'CALCS_BEFORE_FITTING'):
   # This action contains all calculations that have to be done before fitting.
   # The following argument have to within the "external" string in the following order:
-  # zeropoint plus error, extinction coefficient plus error, color coefficient plus error,
-  # colorname, filtername.
+  # path and file of file containing zeropoint plus error, extinction coefficient plus error and color coefficient plus error;
+  # solution (line), colorname, filtername.
   calcs_before_fitting(infile[0], outfile, table, external, replace=True)
 
 
@@ -586,3 +654,8 @@ elif (action == 'FILTER_USUABLE'):
   data7 = filter_elements(data6, color2, -9999, '>')
     
   data7.saveas(outfile, clobber=replace)
+
+elif (action == 'CHECK_ENOUGH_OBJECTS'):
+  data = ldac.LDACCat(infile[0])[table]
+  data_chip = filter_elements(data, 'CHIP', value, "=")
+  print(len(data_chip))
