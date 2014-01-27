@@ -24,24 +24,6 @@ import ldac
 from scipy.optimize import curve_fit
 
 
-def get_data(k):
-    x = np.array([])
-    y = np.array([])
-    b = np.array([])
-    eps = np.array([])
-    chip = np.array([])
-    sigma = np.array([])
-    for i in range(k):
-      b = np.append(b,np.fromfile(path + "chip_%i.csv" %(i+1), sep="\t"))
-    b = b.reshape((-1,15))
-    x = np.append(x,b[:,7])
-    y = np.append(y,b[:,8])
-    eps = np.append(eps,b[:,6])
-    chip = np.append(chip,b[:,5])
-    sigma = np.append(sigma,b[:,14])
-    
-    return x, y, eps, chip, sigma
-
 def delta(x,x0):
   delta = -1.0*abs(x-x0)
   for i in range(len(delta)):
@@ -96,8 +78,6 @@ for o, a in opts:
 NUMCHIPS = int((os.popen("echo ${NCHIPS} | awk '{print $1}'").readlines())[0])
 
 #Getting x,y coordinates, the residual and the chip number...
-#x, y, eps, chip, sigma = get_data(NUMCHIPS)
-replace=True
 data = ldac.LDACCat(infile[0])[table]
 x = np.array(data['Xpos_mod'], dtype=np.float64)
 y = np.array(data['Ypos_mod'], dtype=np.float64)
@@ -109,10 +89,8 @@ sigma = np.array(data['Residual_Err'], dtype=np.float64)
 #Now fit...
 print("Fitting all chips...")
 p0 = np.array((5+NUMCHIPS)*[0.0])
-#p0 = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 best_par, cov_fit = curve_fit(function_poly2d, (x,y,chip), eps, p0, sigma=sigma)
 
 #Print the output...
-#poly2d_curve_output(best_par, cov_fit, NUMCHIPS)
 poly2d_curve_output(best_par, cov_fit)
 print("Fitting complete.")
