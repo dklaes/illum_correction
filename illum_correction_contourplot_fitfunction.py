@@ -81,23 +81,14 @@ def appearance(xlabel, ylabel, title, xlimits, ylimits, grid, camgrid, plt, sub)
 
 def calculatingeps(input):
   i = input[0]
+  # Getting the prefactors.
   A = input[1]
   B = input[2]
   C = input[3]
   D = input[4]
   E = input[5]
   FCHIP = input[6]
-  print("Start calculating data for chip " + str(i+1) + "/" + str(NUMCHIPS) + "...")
-  
-  # Getting the prefactors.
-
-  #A = float(((os.popen("cat " + path + "chip_all.dat | grep A | awk '{print $3}'").readlines())[0]).strip())
-  #B = float(((os.popen("cat " + path + "chip_all.dat | grep B | awk '{print $3}'").readlines())[0]).strip())
-  #C = float(((os.popen("cat " + path + "chip_all.dat | grep C | awk '{print $3}'").readlines())[0]).strip())
-  #D = float(((os.popen("cat " + path + "chip_all.dat | grep D | awk '{print $3}'").readlines())[0]).strip())
-  #E = float(((os.popen("cat " + path + "chip_all.dat | grep E | awk '{print $3}'").readlines())[0]).strip())
-  #FCHIP = float(((os.popen("cat " + path + "chip_all.dat | grep -m1 F" + str(i+1) + " | awk '{print $3}'").readlines())[0]).strip())
-  
+  print("Start calculating data for chip " + str(i+1) + "/" + str(NUMCHIPS) + "...")  
 
   # Creating arrays for x (resized chip coordinates (for numerical reasons)), xred (reduced and resized chip
   # coordinates (for plotting and numerical reasons)) and X (reduced (for plotting)). Having xred and X seperated doesn't
@@ -242,7 +233,6 @@ def plot(arg):
 
     # 1
     ax1 = fig.add_subplot(2, 2, 1, aspect='equal')
-    #ax1.plot(d[:,12],d[:,13],'k,')
     ax1.plot(data['Xpos_global'],data['Ypos_global'],'k,')
     appearance('','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
 
@@ -286,7 +276,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1, aspect='equal')
-    #ax1.plot(d[:,12],d[:,13],'k,')
     ax1.plot(data['Xpos_global'],data['Ypos_global'],'k,')
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax1, 'sub')
     lab.savefig(path + 'single_plots/' + 'camera_1.png')
@@ -336,13 +325,11 @@ def plot(arg):
 
     # 1
     ax1 = fig.add_subplot(2, 1, 1)
-    #ax1.plot(d[:,14],d[:,6],'k,')
     ax1.plot(data['MagZP'],data['Residual'],'k,')
     appearance('','Residual','', '','', 'grid', 'nocamgrid', ax1, 'sub')
 
     # 2
     ax2 = fig.add_subplot(2, 1, 2)
-    #ax2.plot(d[:,9],d[:,10],'k,')
     ax2.plot(data['Mag_fitted'],data['Residual_fitted'],'k,')
     appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax2, 'sub')
     
@@ -356,7 +343,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
-    #ax1.plot(d[:,14],d[:,6],'k,')
     ax1.plot(data['MagZP'],data['Residual'],'k,')
     appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax1, 'sub')
     lab.savefig(path + 'single_plots/' + 'mag_dependency_1.png')
@@ -366,7 +352,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax2 = fig.add_subplot(1, 1, 1)
-    #ax2.plot(d[:,9],d[:,10],'k,')
     ax2.plot(data['Mag_fitted'],data['Residual_fitted'],'k,')
     appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax2, 'sub')
     lab.savefig(path + 'single_plots/' + 'mag_dependency_2.png')
@@ -388,25 +373,21 @@ def plot(arg):
 
     # 1
     ax1 = fig.add_subplot(2, 2, 1)
-    #ax1.plot(d[:,12],d[:,6],'k,')
     ax1.plot(data['Xpos_global'],data['Residual'],'k,')
     appearance('Xpos','Residual','Before fitting', [CAMXMIN, CAMXMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax1, 'sub')
 
     # 2
     ax2 = fig.add_subplot(2, 2, 2)
-    #ax2.plot(d[:,12],d[:,10],'k,')
     ax2.plot(data['Xpos_global'],data['Residual_fitted'],'k,')
     appearance('Xpos','','After fitting', [CAMXMIN, CAMXMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax2, 'sub')
 
     # 3
     ax3 = fig.add_subplot(2, 2, 3)
-    #ax3.plot(d[:,13],d[:,6],'k,')
     ax3.plot(data['Ypos_global'],data['Residual'],'k,')
     appearance('Ypos','Residual','', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax3, 'sub')
 
     # 4
     ax4 = fig.add_subplot(2, 2, 4)
-    #ax4.plot(d[:,13],d[:,10],'k,')
     ax4.plot(data['Ypos_global'],data['Residual_fitted'],'k,')
     appearance('Ypos','','', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax4, 'sub')
 
@@ -420,7 +401,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
-    #ax1.plot(d[:,12],d[:,6],'k,')
     ax1.plot(data['Xpos_global'],data['Residual'],'k,')
     appearance('Xpos','Residual','Before fitting', [CAMXMIN, CAMXMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax1, 'sub')
     lab.savefig(path + 'single_plots/' + 'residuals_1.png')
@@ -430,7 +410,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax2 = fig.add_subplot(1, 1, 1)
-    #ax2.plot(d[:,12],d[:,10],'k,')
     ax2.plot(data['Xpos_global'],data['Residual_fitted'],'k,')
     appearance('Xpos','Residual','After fitting', [CAMXMIN, CAMXMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax2, 'sub')
     lab.savefig(path + 'single_plots/' + 'residuals_2.png')
@@ -440,7 +419,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax3 = fig.add_subplot(1, 1, 1)
-    #ax3.plot(d[:,13],d[:,6],'k,')
     ax3.plot(data['Ypos_global'],data['Residual'],'k,')
     appearance('Ypos','Residual','Before fitting', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax3, 'sub')
     lab.savefig(path + 'single_plots/' + 'residuals_3.png')
@@ -450,7 +428,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax4 = fig.add_subplot(1, 1, 1)
-    #ax4.plot(d[:,13],d[:,10],'k,')
     ax4.plot(data['Ypos_global'],data['Residual_fitted'],'k,')
     appearance('Ypos','Residual','After fitting', [CAMYMIN, CAMYMAX], [-datamax, datamax], 'grid', 'nocamgrid', ax4, 'sub')
     lab.savefig(path + 'single_plots/' + 'residuals_4.png')
@@ -472,25 +449,21 @@ def plot(arg):
     # a higher number so we have to take this (automatically) set (y) limits.
     # 2
     ax2 = fig.add_subplot(2, 2, 2)
-    #ax2.hist(d[:,10],bins=BIN, range=(-sigma,sigma))
     ax2.hist(data['Residual_fitted'],bins=BIN, range=(-sigma,sigma))
     appearance('Residual','','After fitting', [-sigma, sigma], '', 'grid', 'nocamgrid', ax2, 'sub')
     
     # 1
     ax1 = fig.add_subplot(2, 2, 1)
-    #ax1.hist(d[:,6],bins=BIN, range=(-sigma,sigma))
     ax1.hist(data['Residual'],bins=BIN, range=(-sigma,sigma))
     appearance('Residual','Number of objects','Before fitting', [-sigma, sigma], ax2.set_ylim(), 'grid', 'nocamgrid', ax1, 'sub')
     
     # 4
     ax4 = fig.add_subplot(2, 2, 4)
-    #ax4.hist(d[:,10],bins=41, range=(-0.105, 0.105))
     ax4.hist(data['Residual_fitted'],bins=41, range=(-0.105, 0.105))
     appearance('Residual','','', [-0.1,0.1], '', 'grid', 'nocamgrid', ax4, 'sub')
 
     # 3
     ax3 = fig.add_subplot(2, 2, 3)
-    #ax3.hist(d[:,6],bins=41, range=(-0.105, 0.105))
     ax3.hist(data['Residual'],bins=41, range=(-0.105, 0.105))
     appearance('Residual','Number of objects','', [-0.1,0.1], ax4.set_ylim(), 'grid', 'nocamgrid', ax3, 'sub')
     
@@ -504,7 +477,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax2 = fig.add_subplot(1, 1, 1)
-    #ax2.hist(d[:,10],bins=BIN, range=(-sigma,sigma))
     ax2.hist(data['Residual_fitted'],bins=BIN, range=(-sigma,sigma))
     appearance('Residual','Number of objects','After fitting', [-sigma, sigma], '', 'grid', 'nocamgrid', ax2, 'sub')
     lab.savefig(path + 'single_plots/' + 'histograms_2.png')
@@ -514,7 +486,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
-    #ax1.hist(d[:,6],bins=BIN, range=(-sigma,sigma))
     ax1.hist(data['Residual'],bins=BIN, range=(-sigma,sigma))
     appearance('Residual','Number of objects','Before fitting', [-sigma, sigma], ax2.set_ylim(), 'grid', 'nocamgrid', ax1, 'sub')
     lab.savefig(path + 'single_plots/' + 'histograms_1.png')
@@ -524,7 +495,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax4 = fig.add_subplot(1, 1, 1)
-    #ax4.hist(d[:,10],bins=41, range=(-0.105, 0.105))
     ax4.hist(data['Residual_fitted'],bins=41, range=(-0.105, 0.105))
     appearance('Residual','Number of objects','After fitting', [-0.1,0.1], '', 'grid', 'nocamgrid', ax4, 'sub')
     lab.savefig(path + 'single_plots/' + 'histograms_4.png')
@@ -534,7 +504,6 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
     ax3 = fig.add_subplot(1, 1, 1)
-    #ax3.hist(d[:,6],bins=41, range=(-0.105, 0.105))
     ax3.hist(data['Residual'],bins=41, range=(-0.105, 0.105))
     appearance('Residual','Number of objects','Before fitting', [-0.1,0.1], ax4.set_ylim(), 'grid', 'nocamgrid', ax3, 'sub')
     lab.savefig(path + 'single_plots/' + 'histograms_3.png')
@@ -555,15 +524,12 @@ def plot(arg):
       levels_limit = [np.round(-abs(minimum),2), -0.05, 0.05, np.round(abs(maximum),2)]
     else:
       levels_limit = [np.round(-abs(-sigma),2), -0.05, 0.05, np.round(abs(sigma),2)]
-    #xi = lab.linspace(min(d[:,12]), max(d[:,12]))
-    #yi = lab.linspace(min(d[:,13]), max(d[:,13]))
     xi = lab.linspace(min(data['Xpos_global']), max(data['Ypos_global']))
     yi = lab.linspace(min(data['Xpos_global']), max(data['Ypos_global']))
 
     # Optimised order so that zi is computed only once.
     # 1
     ax1 = fig.add_subplot(2, 2, 1, aspect='equal')
-    #zi13 = lab.griddata(d[:,12], d[:,13], d[:,6], xi, yi)
     zi13 = lab.griddata(data['Xpos_global'], data['Ypos_global'], data['Residual'], xi, yi)
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.setp(ax1.get_yticklabels(), visible=True)
@@ -585,7 +551,6 @@ def plot(arg):
     # Optimised order so that zi is computed only once.
     # 2
     ax2 = fig.add_subplot(2, 2, 2, aspect='equal')
-    #zi24 = lab.griddata(d[:,12], d[:,13], d[:,10], xi, yi)
     zi24 = lab.griddata(data['Xpos_global'], data['Ypos_global'], data['Residual_fitted'], xi, yi)
     plt.setp(ax2.get_xticklabels(), visible=False)
     plt.setp(ax2.get_yticklabels(), visible=False)
@@ -660,12 +625,10 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
 
-    #datamax = np.amax((np.fabs(d[:,6]), np.fabs(d[:,10])))
     datamax = np.amax((np.fabs(data['Residual']), np.fabs(data['Residual_fitted'])))
     intervall = np.linspace(-datamax, datamax, num=11)
 
     ax1 = fig.add_subplot(1, 1, 1, aspect='equal')
-    #cax = ax1.scatter(d[:,12], d[:,13], c=d[:,6], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
     cax = ax1.scatter(data['Xpos_global'], data['Ypos_global'], c=data['Residual'], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
     cbar = plt.colorbar(cax, ticks=intervall, format='%0.2f')
 
@@ -681,7 +644,6 @@ def plot(arg):
     fig = plt.figure()
 
     ax1 = fig.add_subplot(1, 1, 1, aspect='equal')
-    #cax = ax1.scatter(d[:,12], d[:,13], c=d[:,10], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
     cax = ax1.scatter(data['Xpos_global'], data['Ypos_global'], c=data['Residual_fitted'], marker='o', cmap=cm.spectral, vmin=-datamax, vmax=datamax)
     cbar = plt.colorbar(cax, ticks=intervall, format='%0.2f')
 
@@ -721,7 +683,6 @@ if __name__ == '__main__':
   
   
   #Reading command line arguments
-  path = sys.argv[1]
   opts, args = getopt.getopt(sys.argv[1:], "i:p:t:e:", ["input=", "path=", "table=", "external="])
 
   infile = path = table =  external = None
@@ -821,13 +782,6 @@ if __name__ == '__main__':
   epswZPALL = epswoZPALL + FCHIPS
 
   # Importing catalogues.
-  #c = np.array([])
-  #for k in range(NUMCHIPS):
-    #c = np.append(c,np.fromfile(path + "chip_%i.csv" %(k+1), sep="\t"))
-  #d = c.reshape((-1,17))
-  #sigma = np.std(d[:,10])
-  #minimum = np.amin(d[:,10])
-  #maximum = np.amax(d[:,10])
   data = ldac.LDACCat(infile[0])[table]
   sigma = np.std(data['Residual_fitted'])
   minimum = np.amin(data['Residual_fitted'])
