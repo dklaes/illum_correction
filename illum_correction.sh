@@ -87,7 +87,7 @@ fi
 if [ "$7" == "RUNCALIB" ]; then
   NIGHTS=0
 elif [ "$7" == "NIGHTCALIB" ]; then
-  NIGHTS=`./illum_ldactools.py -i /${MAIND}/${STANDARDD}/cat/allexp_tmp.cat -t PSSC \
+  NIGHTS=`${P_PYTHON} illum_ldactools.py -i /${MAIND}/${STANDARDD}/cat/allexp_tmp.cat -t PSSC \
 	-k GABODSID -a UNIQUE_ELEMENTS`
 else
   theli_error "RUNMODE not set correctly!"
@@ -129,14 +129,14 @@ if [ "${CATS}" == "" ]; then
 theli_error "No standard catalogue matched catalogues available!"
   exit 1;
 else
-  ./illum_ldactools.py -i "${CATS}" -t PSSC -a PASTE_CATALOGS \
+  ${P_PYTHON} illum_ldactools.py -i "${CATS}" -t PSSC -a PASTE_CATALOGS \
                  -o ${TEMPDIR}/tmp_exp.cat_$$
 fi
 
 # Doing some filtering process which is the same for all chips and nights already here
 # (for performance reasons).
 # Filtering only those detected source with a mag in a certain filter less 99mag
-./illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat_$$ \
+${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat_$$ \
 		  -o ${TEMPDIR}/tmp_exp.cat2_$$ \
 		  -t PSSC -a FILTER_USUABLE -e "${FILTER} ${COLOR}"
 
@@ -170,13 +170,13 @@ do
   if [ "${MODE}" == "RUNCALIB" ]; then
     cp ${TEMPDIR}/tmp_exp.cat2_$$ ${TEMPDIR}/tmp_exp.cat3_$$
   else
-    ./illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat2_$$ \
+    ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat2_$$ \
 		    -o ${TEMPDIR}/tmp_exp.cat3_$$ \
 		    -t PSSC -k GABODSID \
 		    -c "=" -v ${NIGHT}
   fi
 
-  ./illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat3_$$ \
+  ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat3_$$ \
 			-o ${TEMPDIR}/tmp_exp.cat5_$$ -t PSSC \
 			-a CALCS_BEFORE_FITTING \
 			-e "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc 2 ${COLOR} ${FILTER}"
@@ -190,31 +190,31 @@ do
     if [ "${METHOD}" == "PERCENT" ]; then
       # Throw away the upper and lower e.g. 10 percent (controlled via ${UPPERCUTPERCENT}
       # and ${LOWERCUTPERCENT}).
-      ./illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+      ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
 		      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_PERCENT \
 		      -e "${LOWERCUTPERCENT} ${UPPERCUTPERCENT}" -k Residual
 
 
     elif [ "${METHOD}" == "RES" ]; then
-	./illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+	${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
                        -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_RESIDUAL \
 		        -e "${LOWERCUTRESABS} ${UPPERCUTRESABS}" -k Residual
 
 
     elif  [ "${METHOD}" == "RESMEAN" ]; then
-      ./illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+      ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
                        -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_RESIDUALMEAN \
 			-e "${LOWERCUTRESMEAN} ${UPPERCUTRESMEAN}" -k Residual
 
 
     elif [ "${METHOD}" == "MAG" ]; then
-      ./illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+      ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
                        -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_MAGNITUDE \
 			-e "${LOWERCUTMAG} ${UPPERCUTMAG}" -k MagZP
 
 
     elif [ "${METHOD}" == "SIGMA" ]; then
-      ./illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+      ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
                        -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_SIGMA \
 			-e ${SIGMAWIDTH} -k Residual
     fi
@@ -228,7 +228,7 @@ do
   if [ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat" ]; then
 	  while [ ${i} -le ${NCHIPS} ]
 	  do
-	      NUMBER=`./illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat -t PSSC -a CHECK_ENOUGH_OBJECTS -v ${i}`
+	      NUMBER=`${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat -t PSSC -a CHECK_ENOUGH_OBJECTS -v ${i}`
 
 	      if [ ${NUMBER} -le ${MINOBJECTS} ]; then
 		theli_warn "Not enough objects available for fitting. Chip ${i} caused the problem!"
@@ -240,22 +240,22 @@ do
   fi
 
   # Fitting the data
-  ./illum_correction_fit.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat \
+  ${P_PYTHON} illum_correction_fit.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat \
 				-t PSSC -p ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/
 
   #Applying the fit-parameter to our catalog data...
 
-  ./illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat \
+  ${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat \
 			-o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
 			-a CALCS_AFTER_FITTING \
 			-e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt ${FILTER}"
 
-  ./illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
+  ${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
 			-a STATISTICS -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt" \
 			-o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/stats.txt
 
   # Creating a contour plot from the correction function and create a correction FITS file...
-  ./illum_correction_contourplot_fitfunction.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
+  ${P_PYTHON} illum_correction_contourplot_fitfunction.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
 			-p ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt"
 done
 
