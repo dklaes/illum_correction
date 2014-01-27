@@ -1257,7 +1257,8 @@ IMTYPE=`echo ${mode} | awk '{print substr($0, 6)}'`
     echo $FILTNAMSTAND
     if [ "${IMTYPE}" == "CORRECTION" ]; then
         ./illum_correction.sh ${MD} STANDARD_${FILTER} ${FILTER} \
-                2 OFC${SUPERFLAT}${FRINGING} ${FILTNAMSTAND} RUNCALIB
+                2 OFC${SUPERFLAT}${FRINGING} ${FILTNAMSTAND} RUNCALIB \
+		${COLOR}
     else
         ./illum_apply.sh ${MD} ${IMTYPE}_${FILTER} STANDARD_${FILTER} \
                 ${FILTER} OFC${SUPERFLAT}${FRINGING} RUNCALIB ${NPROC} \

@@ -17,6 +17,7 @@
 # $6			filter as used in files (e.g. R instead of r_SDSS)
 # $7  			operation mode ("RUNCALIB" for illum correction for the entire
 #     			run or "NIGHTCALIB" for illum correction for every night)
+# $8			name of color term (e.g. gmr)
 #
 # MINOBJECTS		Minimal number of objects that are required for fitting
 # CUTS			Array containing cut types and order
@@ -43,6 +44,8 @@
 # Changes from V1.2 to V1.3
 # - included residual cut with respect to the mean
 # - Single plots are available
+# - Added color term name and include color term
+# - Included error calculation for residual with Gaussian error propagation
 
 
 MAIND=$1
@@ -52,11 +55,12 @@ SOLUTION=$4
 EXTENSION=$5
 FILTER=$6
 MODE=$7
+COLOR=$8
 
 MINOBJECTS=0
 CUTS="RESMEAN"
-LOWERCUTPERCENT=0.1	#percent
-UPPERCUTPERCENT=0.1	#percent
+LOWERCUTPERCENT=10	#percent
+UPPERCUTPERCENT=10	#percent
 LOWERCUTRESABS=-0.2	#mag
 UPPERCUTRESABS=0.2	#mag
 LOWERCUTMAG=10		#mag
@@ -74,24 +78,22 @@ UPPERCUTRESMEAN=0.2	#mag
 theli_start "$*"
 
 # Checking for correct number of command line arguments.
-if [ $# -ne 7 ]; then
-  theli_error "Wrong number of command line arguments! You gave me $# but I need 7."
+if [ $# -ne 8 ]; then
+  theli_error "Wrong number of command line arguments! You gave me $# but I need 8."
   exit 1;
 fi
 
 # Checking which runmode shall be used. See also information for $7 above.
-REDDIR=`pwd`
-cd /${MAIND}/${STANDARDD}/calib/
 if [ "$7" == "RUNCALIB" ]; then
   NIGHTS=0
 elif [ "$7" == "NIGHTCALIB" ]; then
-  NIGHTS=`${P_LDACTOASC} -i /${MAIND}/${STANDARDD}/cat/allexp_tmp.cat -t PSSC \
-      -b -k GABODSID | ${P_SORT} | uniq | awk '{printf("%s ", $1)}'`
+  NIGHTS=`${P_PYTHON} illum_ldactools.py -i /${MAIND}/${STANDARDD}/cat/allexp_tmp.cat -t PSSC \
+	-k GABODSID -a UNIQUE_ELEMENTS`
 else
   theli_error "RUNMODE not set correctly!"
   exit 1;
 fi
-cd ${REDDIR}
+
 
 # Check, for each available night, if the residuals folder exist. If so, delete it and if not, create it.
 for NIGHT in ${NIGHTS}
@@ -127,16 +129,16 @@ if [ "${CATS}" == "" ]; then
 theli_error "No standard catalogue matched catalogues available!"
   exit 1;
 else
-  ${P_LDACPASTE} -i ${CATS} -t PSSC\
+  ${P_PYTHON} illum_ldactools.py -i "${CATS}" -t PSSC -a PASTE_CATALOGS \
                  -o ${TEMPDIR}/tmp_exp.cat_$$
 fi
 
 # Doing some filtering process which is the same for all chips and nights already here
 # (for performance reasons).
 # Filtering only those detected source with a mag in a certain filter less 99mag
-${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat_$$ \
+${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat_$$ \
 		  -o ${TEMPDIR}/tmp_exp.cat2_$$ \
-		  -t PSSC -c "(${FILTER}mag<99);"
+		  -t PSSC -a FILTER_USUABLE -e "${FILTER} ${COLOR}"
 
 # Checking if we have still objects at all.
 if [ ! -e "${TEMPDIR}/tmp_exp.cat2_$$" ]; then
@@ -155,16 +157,12 @@ do
 done
 
 
-# Now extract all needed information from the chip-based catalogues. 
-# Please make sure that you have already modified stdphotom_prepare_make_ssc.conf 
+# Now extract all needed information from the chip-based catalogues.
+# Please make sure that you have already modified stdphotom_prepare_make_ssc.conf
 # containing Xpos and Ypos (normally from input catalogue 0)!
 
 for NIGHT in ${NIGHTS}
 do
-  # Getting the zeropoint with the given solution number line
-  ZP=`${P_GAWK} 'NR == '${SOLUTION}' {print $1}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
-  EXT=`${P_GAWK} 'NR == '${SOLUTION}' {print $2}' ${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc`
-
   # First filtering for objects of this specific night. Then calculate
   # the residual with the ZP from the fit done by the THELI pipeline.
   # It's residual = detected magnitude + zeropoint - reference and
@@ -172,21 +170,16 @@ do
   if [ "${MODE}" == "RUNCALIB" ]; then
     cp ${TEMPDIR}/tmp_exp.cat2_$$ ${TEMPDIR}/tmp_exp.cat3_$$
   else
-    ${P_LDACFILTER} -i ${TEMPDIR}/tmp_exp.cat2_$$ \
+    ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat2_$$ \
 		    -o ${TEMPDIR}/tmp_exp.cat3_$$ \
-		    -t PSSC \
-		    -c "(GABODSID=${NIGHT});"
+		    -t PSSC -k GABODSID \
+		    -c "=" -v ${NIGHT}
   fi
 
-  ${P_LDACCALC} -i ${TEMPDIR}/tmp_exp.cat3_$$ \
-                -o ${TEMPDIR}/tmp_exp.cat4_$$ -t PSSC \
-                -c "(Mag+${ZP}+${EXT}*AIRMASS);" -n MagZP "" -k FLOAT
-  ${P_LDACCALC} -i ${TEMPDIR}/tmp_exp.cat4_$$ \
-                -o ${TEMPDIR}/tmp_exp.cat5_$$ -t PSSC \
-                -c "(MagZP-${FILTER}mag);" -n Residual "" -k FLOAT \
-                -c "((2.0*Xpos_global)/${PIXXMAX});" -n Xpos_mod "" -k FLOAT \
-                -c "((2.0*Ypos_global)/${PIXYMAX});" -n Ypos_mod "" -k FLOAT
-
+  ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat3_$$ \
+			-o ${TEMPDIR}/tmp_exp.cat5_$$ -t PSSC \
+			-a CALCS_BEFORE_FITTING \
+			-e "${MAIND}/${STANDARDD}/calib/night_${NIGHT}_${FILTERNAME}_result.asc 2 ${COLOR} ${FILTER}"
 
   # Now filtering according to given methods and values:
   i=0
@@ -197,54 +190,33 @@ do
     if [ "${METHOD}" == "PERCENT" ]; then
       # Throw away the upper and lower e.g. 10 percent (controlled via ${UPPERCUTPERCENT}
       # and ${LOWERCUTPERCENT}).
-      NUMBERUPPER=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${UPPERCUTPERCENT}'}'`
-      NUMBERLOWER=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | wc -l | ${P_GAWK} '{printf "%.0f", $1*'${LOWERCUTPERCENT}'}'`
-      LOWERVALUE=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | sort -g | ${P_GAWK} 'NR=='${NUMBERLOWER}' {print $0}'`
-      HIGHERVALUE=`${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC -k Residual | sort -rg | ${P_GAWK} 'NR=='${NUMBERUPPER}' {print $0}'`
-
-      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
-		      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
-		      -c "((Residual<${HIGHERVALUE})AND(Residual>${LOWERVALUE}));"
+      ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+		      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_PERCENT \
+		      -e "${LOWERCUTPERCENT} ${UPPERCUTPERCENT}" -k Residual
 
 
     elif [ "${METHOD}" == "RES" ]; then
-      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
-                      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
-                      -c "((Residual>${LOWERCUTRESABS})AND(Residual<${UPPERCUTRESABS}));"
+	${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                       -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_RESIDUAL \
+		        -e "${LOWERCUTRESABS} ${UPPERCUTRESABS}" -k Residual
 
 
     elif  [ "${METHOD}" == "RESMEAN" ]; then
-      ${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
-                     -k Residual > ${TEMPDIR}/res_${NIGHT}.csv_$$
-
-      MEAN=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
-              | ${P_GAWK} -f meanvar.awk | grep mean | ${P_GAWK} '{print $3}'`
-
-      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
-                      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
-                      -c "((Residual>(${LOWERCUTRESMEAN}+${MEAN}))AND(Residual<(${UPPERCUTRESMEAN}+${MEAN})));"
+      ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                       -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_RESIDUALMEAN \
+			-e "${LOWERCUTRESMEAN} ${UPPERCUTRESMEAN}" -k Residual
 
 
     elif [ "${METHOD}" == "MAG" ]; then
-      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
-                      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
-                      -c "((MagZP>${LOWERCUTMAG})AND(MagZP<${UPPERCUTMAG}));"
+      ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                       -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_MAGNITUDE \
+			-e "${LOWERCUTMAG} ${UPPERCUTMAG}" -k MagZP
 
 
     elif [ "${METHOD}" == "SIGMA" ]; then
-      ${P_LDACTOASC} -b -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
-                     -k Residual > ${TEMPDIR}/res_${NIGHT}.csv_$$
-
-      SIGMA=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
-	      | ${P_GAWK} -f meanvar.awk | grep sigma | ${P_GAWK} '{print $3}'`
-      MEAN=`${P_GAWK} '{if ($1!="#") {print $1}}' ${TEMPDIR}/res_${NIGHT}.csv_$$ \
-	      | ${P_GAWK} -f meanvar.awk | grep mean | ${P_GAWK} '{print $3}'`
-
-      # Filtering only those residuals which lies in certain given limits.
-      ${P_LDACFILTER} -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ \
-                      -o ${TEMPDIR}/tmp_filter.cat${i}_$$ \
-                      -c "((Residual<${MEAN}+${SIGMAWIDTH}*${SIGMA})AND(Residual>${MEAN}-${SIGMAWIDTH}*${SIGMA}));" \
-                      -t PSSC
+      ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat$(( $i - 1 ))_$$ -t PSSC \
+                       -o ${TEMPDIR}/tmp_filter.cat${i}_$$ -a FILTER_SIGMA \
+			-e ${SIGMAWIDTH} -k Residual
     fi
   done
 
@@ -252,84 +224,39 @@ do
 
   # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
   # Check, if for all chips enough objects are available. If not, warn.
-  # Extracting all needed information into a CSV file (night based)
   i=1
-  while [ ${i} -le ${NCHIPS} ]
-  do
-    ${P_LDACFILTER} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat -t PSSC \
-                    -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat \
-                    -c "(CHIP=${i});"
-    
-    if [ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat" ]; then
-      NUMBER=`${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC -k MagZP | wc -l`
-      if [ ${NUMBER} -le ${MINOBJECTS} ]; then
-	theli_warning "Not enough objects available for fitting. Chip ${i} caused the problem!"
-      fi
-    else
-      theli_warning "No information for at least one chip available. Chip ${i} caused the problem!"
-    fi
+  if [ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat" ]; then
+	  while [ ${i} -le ${NCHIPS} ]
+	  do
+	      NUMBER=`${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat -t PSSC -a CHECK_ENOUGH_OBJECTS -v ${i}`
 
-    ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -t PSSC \
-	    -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID Residual Xpos_mod \
-	    Ypos_mod AIRMASS Xpos_global Ypos_global MagZP >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
-    i=$(( $i + 1 ))
-  done
+	      if [ ${NUMBER} -le ${MINOBJECTS} ]; then
+		theli_warn "Not enough objects available for fitting. Chip ${i} caused the problem!"
+	      fi
+              i=$(( $i + 1 ))
+	  done
+  else
+	theli_warn "No information for all chips available!"
+  fi
 
-  
   # Fitting the data
-  ./illum_correction_fit.py ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/
+  ${P_PYTHON} illum_correction_fit.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat \
+				-t PSSC -p ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/
 
-  rm ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_*.csv
-  
   #Applying the fit-parameter to our catalog data...
-  i=1
-  # Getting the prefaktors of our correction model.
-  A=`grep A ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat | ${P_GAWK} '{print $3}'`
-  B=`grep B ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat | ${P_GAWK} '{print $3}'`
-  C=`grep C ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat | ${P_GAWK} '{print $3}'`
-  D=`grep D ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat | ${P_GAWK} '{print $3}'`
-  E=`grep E ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat | ${P_GAWK} '{print $3}'`
-  while [ ${i} -le ${NCHIPS} ]
-  do
-    FCHIP=`grep -m1 F${i} ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat | ${P_GAWK} '{print $3}'`
-    
-    # Calculating the fitted magnitude for each object and the fitted residuals.
-    ${P_LDACCALC} -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered.cat -o ${TEMPDIR}/chip_${i}_filtered_fitted.cat1_$$ -t PSSC \
-      -c "(MagZP-${A}*(Xpos_mod*Xpos_mod)-${B}*(Ypos_mod*Ypos_mod)-${C}*(Xpos_mod*Ypos_mod)-${D}*Xpos_mod-${E}*Ypos_mod-${FCHIP});" \
-      -n Mag_fitted "" -k FLOAT
-    ${P_LDACCALC} -i ${TEMPDIR}/chip_${i}_filtered_fitted.cat1_$$ -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered_fitted.cat -t PSSC \
-      -c "(Mag_fitted-${FILTER}mag);" -n Residual_fitted "" -k FLOAT
-    
-    # Extracting all needed information into a CSV file (night based)
-    ${P_LDACTOASC} -b -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}_filtered_fitted.cat -t PSSC -k Xpos Ypos Mag MagErr ${FILTER}mag IMAGEID \
-      Residual Xpos_mod Ypos_mod Mag_fitted Residual_fitted AIRMASS Xpos_global Ypos_global MagZP >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv
-    i=$(( $i + 1 ))
-  done
 
-  # Now calculating some statistics for before and after the fitting process for each chip and for all chips...
-  i=1
-  while [ ${i} -le ${NCHIPS} ]
-  do
-    echo "" >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.dat
-    echo "Statistics of residuals before fitting:" >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.dat
-    ${P_GAWK} '{if ($1!="#") {print $7}}' ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv | ${P_GAWK} -f meanvar.awk >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.dat
-    echo "" >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.dat
-    echo "Statistics of residuals after fitting:" >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.dat
-    ${P_GAWK} '{if ($1!="#") {print $11}}' ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv | ${P_GAWK} -f meanvar.awk >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.dat
-    cat ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_${i}.csv >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.csv
-    i=$(( $i + 1 ))
-  done
-  echo "" >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat
-  echo "Statistics of residuals before fitting:" >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat
-  ${P_GAWK} '{if ($1!="#") {print $7}}' ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.csv | ${P_GAWK} -f meanvar.awk >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat
-  echo "" >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat
-  echo "Statistics of residuals after fitting:" >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat
-  ${P_GAWK} '{if ($1!="#") {print $11}}' ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.csv | ${P_GAWK} -f meanvar.awk >> ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.dat &
-  
+  ${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat \
+			-o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
+			-a CALCS_AFTER_FITTING \
+			-e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt ${FILTER}"
+
+  ${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
+			-a STATISTICS -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt" \
+			-o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/stats.txt
+
   # Creating a contour plot from the correction function and create a correction FITS file...
-  SIGMA=`${P_GAWK} '{if ($1!="#") {print $7}}' ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all.csv \
-    | ${P_GAWK} -f meanvar.awk | grep sigma | ${P_GAWK} '{print $3}'`
-  ./illum_correction_contourplot_fitfunction.py ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/ -${SIGMA} ${SIGMA}
+  ${P_PYTHON} illum_correction_contourplot_fitfunction.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
+			-p ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt"
 done
 
 

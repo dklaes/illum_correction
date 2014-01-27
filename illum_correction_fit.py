@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #scipy-0.11 and numpy-1.6.2 required!
 
@@ -17,29 +16,13 @@
 
 #Importing packages
 from __future__ import division, print_function
-import matplotlib.pyplot as plt
-import matplotlib.pylab as lab
 import numpy as np
 import os
 import sys
+import getopt
+import ldac
 from scipy.optimize import curve_fit
 
-
-def get_data(k):
-    x = np.array([])
-    y = np.array([])
-    b = np.array([])
-    eps = np.array([])
-    chip = np.array([])
-    for i in range(k):
-      b = np.append(b,np.fromfile(path + "chip_%i.csv" %(i+1), sep="\t"))
-    b = b.reshape((-1,13))
-    x = np.append(x,b[:,7])
-    y = np.append(y,b[:,8])
-    eps = np.append(eps,b[:,6])
-    chip = np.append(chip,b[:,5])
-    
-    return x, y, eps, chip
 
 def delta(x,x0):
   delta = -1.0*abs(x-x0)
@@ -65,34 +48,49 @@ Polinomial coefficients
 
 
 
-def poly2d_curve_output(best_params, cov,k):
+#def poly2d_curve_output(best_params, cov,k):
+def poly2d_curve_output(best_params, cov):
     pars = ['A', 'B', 'C', 'D', 'E', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16', 'F17', 'F18', 'F19', 'F20', 'F21', 'F22', 'F23', 'F24', 'F25', 'F26', 'F27', 'F28', 'F29', 'F30', 'F31', 'F32']
     #Diagonal terms of the covariance matrix are the variance of the fitted par
     error = np.sqrt(np.diagonal(cov))
-    f = open(path + 'chip_all.dat', 'w')
+    f = open(path + 'coeffs.txt', 'w')
     for name, value, sig in zip(pars, best_params, error):
       f.write("%s = %2.18f +- %2.18f\n" % (name, value, sig))
     f.close()
-    f = open(path + 'chip_all.cov', 'w')
+    f = open(path + 'coveriance_matrix.txt', 'w')
     f.write("%s" %cov)
     f.close()
 
 
 #Reading command line arguments
-path = sys.argv[1]
+opts, args = getopt.getopt(sys.argv[1:], "i:t:p:", ["input=", "table=", "path="])
 
+infile = table = path = None
+for o, a in opts:
+    if o in ("-i"):
+        infile = a.split()
+    elif o in ("-t"):
+        table = a
+    elif o in ("-p"):
+        path = a
 
 #Reading chip geometry from config file
 NUMCHIPS = int((os.popen("echo ${NCHIPS} | awk '{print $1}'").readlines())[0])
 
 #Getting x,y coordinates, the residual and the chip number...
-x, y, eps, chip = get_data(NUMCHIPS)
+data = ldac.LDACCat(infile[0])[table]
+x = np.array(data['Xpos_mod'], dtype=np.float64)
+y = np.array(data['Ypos_mod'], dtype=np.float64)
+eps = np.array(data['Residual'], dtype=np.float64)
+chip = np.array(data['CHIP'], dtype=np.int)
+sigma = np.array(data['Residual_Err'], dtype=np.float64)
+
 
 #Now fit...
 print("Fitting all chips...")
-p0 = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
-best_par, cov_fit = curve_fit(function_poly2d, (x,y,chip), eps, p0, sigma=0.5)
+p0 = np.array((5+NUMCHIPS)*[0.0])
+best_par, cov_fit = curve_fit(function_poly2d, (x,y,chip), eps, p0, sigma=sigma)
 
 #Print the output...
-poly2d_curve_output(best_par, cov_fit, NUMCHIPS)
+poly2d_curve_output(best_par, cov_fit)
 print("Fitting complete.")
