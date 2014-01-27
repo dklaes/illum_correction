@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #scipy-0.11 and numpy-1.6.2 required!
 
@@ -17,8 +16,6 @@
 
 #Importing packages
 from __future__ import division, print_function
-import matplotlib.pyplot as plt
-import matplotlib.pylab as lab
 import numpy as np
 import os
 import sys
