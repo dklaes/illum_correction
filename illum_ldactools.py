@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #numpy-1.6.2 required!
 
@@ -64,7 +63,7 @@ def calcs_before_fitting(infile, outfile, table, external, replace=False):
     coeffs['COLCOEFFERR' + str(i)] = float(entries[5])
     i = i + 1
 
-  f.close()
+  coefffile.close()
 
   solution = int(external[1])
   ZP = coeffs['ZP' + str(solution)] #float(external[0])
