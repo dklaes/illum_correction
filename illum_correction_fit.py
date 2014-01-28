@@ -58,7 +58,13 @@ def poly2d_curve_output(best_params, cov):
       f.write("%s = %2.18f +- %2.18f\n" % (name, value, sig))
     f.close()
     f = open(path + 'coveriance_matrix.txt', 'w')
-    f.write("%s" %cov)
+    for i in range(len(pars)):
+      for j in range(len(pars)):
+	if (j==0):
+	  string = str(cov[i][j])
+	else:
+	  string = string + " " + str(cov[i][j])
+      f.write("%s\n" %string)
     f.close()
 
 
