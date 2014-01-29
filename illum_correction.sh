@@ -254,6 +254,9 @@ do
 			-a STATISTICS -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt" \
 			-o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/stats.txt
 
+  ${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
+			-o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/fitting.txt -a MAG_DEPENDENCY
+
   # Creating a contour plot from the correction function and create a correction FITS file...
   ${P_PYTHON} illum_correction_contourplot_fitfunction.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
 			-p ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/ -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt"
