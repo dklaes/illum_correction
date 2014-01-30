@@ -230,18 +230,20 @@ def calculate_ellipse(coordinates, prefactors, center):
 	del cond2
 
 	distance = np.sqrt(XXcond2*XXcond2+YYcond2*YYcond2)
-	print(k, np.amax(distance))
-	maxdistance = np.append(maxdistance, np.amax(distance))
-	area = np.append(area, len(epscond2.flatten()))
 
-	x = np.append(x, XXcond2[distance==maxdistance[k]])
-	del XXcond2
-	
-	y = np.append(y, YYcond2[distance==maxdistance[k]])
-	del YYcond2
-	
-	eps = np.append(eps, epscond2[distance==maxdistance[k]])
-	del epscond2
+	if (len(epscond2) != 0):
+	  maxdistancepart = np.amax(distance)
+	  maxdistance = np.append(maxdistance, maxdistancepart)
+	  area = np.append(area, len(epscond2.flatten()))
+
+	  x = np.append(x, XXcond2[distance==maxdistancepart])
+	  del XXcond2
+	  
+	  y = np.append(y, YYcond2[distance==maxdistancepart])
+	  del YYcond2
+	  
+	  eps = np.append(eps, epscond2[distance==maxdistancepart])
+	  del epscond2
 
   maxdistancefinal = np.amax(maxdistance)
   areafinal = np.sum(area)
@@ -710,25 +712,25 @@ elif (action == 'STATISTICS'):
   UR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
   
   coordinates = np.array([])
-  coordinates = np.append(coordinates, (UL[0], UL[0]/2, UL[1]/2, UL[1]))
-  coordinates = np.append(coordinates, (UL[0]/2, 0, UL[1]/2, UL[1]))
-  coordinates = np.append(coordinates, (0, UR[0]/2, UR[1]/2, UR[1]))
-  coordinates = np.append(coordinates, (UR[0]/2, UR[0], UR[1]/2, UR[1]))
+  coordinates = np.append(coordinates, (UL[0], UL[0]/2, UL[1]/2 + 1, UL[1]))
+  coordinates = np.append(coordinates, (UL[0]/2 + 1, 0, UL[1]/2 + 1, UL[1]))
+  coordinates = np.append(coordinates, (0 + 1, UR[0]/2, UR[1]/2 + 1, UR[1]))
+  coordinates = np.append(coordinates, (UR[0]/2 + 1, UR[0], UR[1]/2 + 1, UR[1]))
   
-  coordinates = np.append(coordinates, (UL[0], UL[0]/2, 0, UL[1]/2))
-  coordinates = np.append(coordinates, (UL[0]/2, 0, 0, UL[1]/2))
-  coordinates = np.append(coordinates, (0, UR[0]/2, 0, UR[1]/2))
-  coordinates = np.append(coordinates, (UR[0]/2, UR[0], 0, UR[1]/2))
+  coordinates = np.append(coordinates, (UL[0], UL[0]/2, 0 + 1, UL[1]/2))
+  coordinates = np.append(coordinates, (UL[0]/2 + 1, 0, 0 + 1, UL[1]/2))
+  coordinates = np.append(coordinates, (0 + , UR[0]/2, 0 + 1, UR[1]/2))
+  coordinates = np.append(coordinates, (UR[0]/2 + 1, UR[0], 0 + 1, UR[1]/2))
   
-  coordinates = np.append(coordinates, (LL[0], LL[0]/2, LL[1]/2, 0))
-  coordinates = np.append(coordinates, (LL[0]/2, 0, LL[1]/2, 0))
-  coordinates = np.append(coordinates, (0, LR[0]/2, LR[1]/2, 0))
-  coordinates = np.append(coordinates, (LR[0]/2, LR[0], LR[1]/2, 0))
+  coordinates = np.append(coordinates, (LL[0], LL[0]/2, LL[1]/2 + 1, 0))
+  coordinates = np.append(coordinates, (LL[0]/2 + 1, 0, LL[1]/2 + 1, 0))
+  coordinates = np.append(coordinates, (0 + 1, LR[0]/2, LR[1]/2 + 1, 0))
+  coordinates = np.append(coordinates, (LR[0]/2 + 1, LR[0], LR[1]/2 + 1, 0))
   
   coordinates = np.append(coordinates, (LL[0], LL[0]/2, LL[1], LL[1]/2))
-  coordinates = np.append(coordinates, (LL[0]/2, 0, LL[1], LL[1]/2))
-  coordinates = np.append(coordinates, (0, LR[0]/2, LR[1], LR[1]/2))
-  coordinates = np.append(coordinates, (LR[0]/2, LR[0], LR[1], LR[1]/2))
+  coordinates = np.append(coordinates, (LL[0]/2 + 1, 0, LL[1], LL[1]/2))
+  coordinates = np.append(coordinates, (0 + 1, LR[0]/2, LR[1], LR[1]/2))
+  coordinates = np.append(coordinates, (LR[0]/2 + 1, LR[0], LR[1], LR[1]/2))
 
   coordinates = coordinates.reshape((-1,4))
   statistics(infile[0], outfile, table, external, coordinates)
