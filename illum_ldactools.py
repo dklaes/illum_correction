@@ -719,7 +719,7 @@ elif (action == 'STATISTICS'):
   
   coordinates = np.append(coordinates, (UL[0], UL[0]/2, 0 + 1, UL[1]/2))
   coordinates = np.append(coordinates, (UL[0]/2 + 1, 0, 0 + 1, UL[1]/2))
-  coordinates = np.append(coordinates, (0 + , UR[0]/2, 0 + 1, UR[1]/2))
+  coordinates = np.append(coordinates, (0 + 1, UR[0]/2, 0 + 1, UR[1]/2))
   coordinates = np.append(coordinates, (UR[0]/2 + 1, UR[0], 0 + 1, UR[1]/2))
   
   coordinates = np.append(coordinates, (LL[0], LL[0]/2, LL[1]/2 + 1, 0))
