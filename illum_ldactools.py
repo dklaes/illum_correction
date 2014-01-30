@@ -234,11 +234,12 @@ def calculate_ellipse(coordinates, prefactors, center):
 	area = np.append(area, len(epscond2.flatten()))
 
 	x = np.append(x, XXcond2[distance==maxdistance[k]])
-	y = np.append(y, YYcond2[distance==maxdistance[k]])
-	eps = np.append(eps, epscond2[distance==maxdistance[k]])
-
 	del XXcond2
+	
+	y = np.append(y, YYcond2[distance==maxdistance[k]])
 	del YYcond2
+	
+	eps = np.append(eps, epscond2[distance==maxdistance[k]])
 	del epscond2
 
   maxdistancefinal = np.amax(maxdistance)
@@ -426,94 +427,96 @@ def statistics(infile, outfile, table, external, coordinates):
     else:
       f.write("%s %.5f %.5f\n" % (name, output[name + '_before'], output[name + '_after']))
   f.close()
-
-
+  
 
 # Magnitude - residual dependency
-
 def function_linear_plusOffset(x, A, B):
-	return A*x + B
+  return A*x + B
 
 def function_linear(x, A):
-	return A*x
-
+  return A*x 
+  
 def mag_dependency(infile, outfile, table, realisation=0):
-  # Importing catalogues.
+  # Importing catalog.
   data = ldac.LDACCat(infile)[table]
   fmagdependency = open(outfile, "w")
   
-  for k in range(NUMCHIPS+1):
-	if ( k == 0 ):
-	  data2 = data
-	else:
-	  data2 = filter_elements(data, 'CHIP',k , '=')
+  for i in range(NUMCHIPS+1):
+    if (i == 0):
+      data2 = data
+    else:
+      data2 = filter_elements(data, 'CHIP', i, '=')
 
-	MagZP = np.array(data2['MagZP'], dtype=np.float64)
-	Residual = np.array(data2['Residual'], dtype=np.float64)
-	Residual_Err = np.array(data2['Residual_Err'], dtype=np.float64)
-	Mag_fitted = np.array(data2['Mag_fitted'], dtype=np.float64)
-	Residual_fitted = np.array(data2['Residual_fitted'], dtype=np.float64)
-	Residual_fitted_Err = np.array(data2['Residual_fitted_Err'], dtype=np.float64)
-	
-	# A = coefficient A
-	# B = coefficient B
-	# w = with
-	# wo = without
-	# O = Offset
-	# b = before fitting
-	# a = after fitting
-	# F = Fitting
-	# Linear fit with offset before illumination correction
-	p0 = np.array([0.0, 0.0])
-	best_par, cov_fit = curve_fit(function_linear_plusOffset, MagZP, Residual, p0, sigma=Residual_Err)
-	error = np.sqrt(np.diagonal(cov_fit))
-	AwObF = best_par[0]
-	BwObF = best_par[1]
-	AwObF_Err = error[0]
-	BwObF_Err = error[1]
+    MagZP = np.array(data2['MagZP'], dtype=np.float64)
+    Residual = np.array(data2['Residual'], dtype=np.float64)
+    Residual_Err = np.array(data2['Residual_Err'], dtype=np.float64)
+    Mag_fitted = np.array(data2['Mag_fitted'], dtype=np.float64)
+    Residual_fitted = np.array(data2['Residual_fitted'], dtype=np.float64)
+    Residual_fitted_Err = np.array(data2['Residual_fitted_Err'], dtype=np.float64)
+    
+    # A = factor A
+    # B = factor B
+    # w = with
+    # wo = without
+    # O = Offset
+    # b = before
+    # a = after
+    # F = Fitting
+    # Linear fit with offset before illumination correction
+    p0 = np.array([0.0, 0.0])
+    best_par, cov_fit = curve_fit(function_linear_plusOffset, MagZP, Residual, p0, sigma=Residual_Err)
+    AwObF = best_par[0]
+    BwObF = best_par[1]
+    error = np.sqrt(np.diagonal(cov_fit))
+    AwObF_Err = error[0]
+    BwObF_Err = error[1]
 
-	# Linear fit with offset after illumination correction
-	p0 = np.array([0.0, 0.0])
-	best_par, cov_fit = curve_fit(function_linear_plusOffset, Mag_fitted, Residual_fitted, p0, sigma=Residual_fitted_Err)
-	error = np.sqrt(np.diagonal(cov_fit))
-	AwOaF = best_par[0]
-	BwOaF = best_par[1]
-	AwOaF_Err = error[0]
-	BwOaF_Err = error[1]
+    # Linear fit with offset after illumination correction
+    p0 = np.array([0.0, 0.0])
+    best_par, cov_fit = curve_fit(function_linear_plusOffset, Mag_fitted, Residual_fitted, p0, sigma=Residual_fitted_Err)
+    AwOaF = best_par[0]
+    BwOaF = best_par[1]
+    error = np.sqrt(np.diagonal(cov_fit))
+    AwOaF_Err = error[0]
+    BwOaF_Err = error[1]
 
-	# Linear fit without offset before illumination correction
-	p0 = np.array([0.0])
-	best_par, cov_fit = curve_fit(function_linear, MagZP, Residual, p0, sigma=Residual_Err)
-	error = np.sqrt(np.diagonal(cov_fit))
-	AwoObF = best_par[0]
-	AwoObF_Err = error[0]
+    # Linear fit without offset before illumination correction
+    p0 = np.array([0.0])
+    best_par, cov_fit = curve_fit(function_linear, MagZP, Residual, p0, sigma=Residual_Err)
+    AwoObF = best_par[0]
+    error = np.sqrt(np.diagonal(cov_fit))
+    AwoObF_Err = error[0]
 
-	# Linear fit without offset after illumination correction
-	p0 = np.array([0.0])
-	best_par, cov_fit = curve_fit(function_linear, Mag_fitted, Residual_fitted, p0, sigma=Residual_fitted_Err)
-	error = np.sqrt(np.diagonal(cov_fit))
-	AwoOaF = best_par[0]
-	AwoOaF_Err = error[0]
-		
-	# Writing to file
-	# Format:
-	# 1: realisation (only important for bootstrapping, otherwise per default 0)
-	# 2: chip (if 0 then all chips were taken into account)
-	# 3: A with offset, before fitting
-	# 4: A_Err with offset, before fitting
-	# 5: B with offset, before fitting
-	# 6: B_Err with offset, before fitting
-	# 7: A with offset, after fitting
-	# 8: A_Err with offset, after fitting
-	# 9: B with offset, after fitting
-	# 10: B_Err with offset, after fitting
-	# 11: A without offset, before fitting
-	# 12: A_Err without offset, before fitting
-	# 13: A without offset, after fitting
-	# 14: A_Err without offset, after fitting
-	fmagdependency.write("%i %i %f %f %f %f %f %f %f %f %f %f %f %f\n" %(realisation, k, AwObF, AwObF_Err, BwObF, BwObF_Err, AwOaF, AwOaF_Err, BwOaF, BwOaF_Err, AwoObF, AwoObF_Err, AwoOaF, AwoOaF_Err))
+    # Linear fit without offset after illumination correction
+    p0 = np.array([0.0])
+    best_par, cov_fit = curve_fit(function_linear, Mag_fitted, Residual_fitted, p0, sigma=Residual_fitted_Err)
+    AwoOaF = best_par[0]
+    error = np.sqrt(np.diagonal(cov_fit))
+    AwoOaF_Err = error[0]
+
+    
+    # Writing to file
+    # Format:
+    # 1: realisation (only important for bootstrapping, otherwise per default 0)
+    # 2: chip number (0 for all chips)
+    # 3: Factor A, with offset, before fitting
+    # 4: Factor A_Err, with offset, before fitting
+    # 5: Factor B, with offset, before fitting
+    # 6: Factor B_Err, with offset, before fitting
+    # 7: Factor A, with offset, after fitting
+    # 8: Factor A_Err, with offset, after fitting
+    # 9: Factor B, with offset, after fitting
+    # 10: Factor B_Err, with offset, after fitting
+    # 11: Factor A, without offset, before fitting
+    # 12: Factor A_Err, without offset, before fitting
+    # 13: Factor A, without offset, after fitting
+    # 14: Factor A_Err, without offset, after fitting
+    fmagdependency.write("%i %i %f %f %f %f %f %f %f %f %f %f %f %f\n" %(realisation, i, AwObF, AwObF_Err, BwObF, BwObF_Err, AwOaF, AwOaF_Err, BwOaF, BwOaF_Err, AwoObF, AwoObF_Err, AwoOaF, AwoOaF_Err))
 
   fmagdependency.close()
+
+
+
 
 
 opts, args = getopt.getopt(sys.argv[1:], "i:o:t:k:a:v:c:e:", ["input=", "output=", "table=", "key=", "action=", "value=", "condition=", "external="])
@@ -706,17 +709,27 @@ elif (action == 'STATISTICS'):
   UR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
   
   coordinates = np.array([])
-  # Bottom left part of the camera
-  coordinates = np.append(coordinates, (LL[0],0,LL[1],0))
-  # Bottom right part of the camera.
-  coordinates = np.append(coordinates, (0,LR[0],LR[1],0))
-  # Upper left part of the camera.
-  coordinates = np.append(coordinates, (UL[0],0,0,UL[1]))
-  # Upper right part of the camera.
-  coordinates = np.append(coordinates, (0,UR[0],0,UR[1]))
+  coordinates = np.append(coordinates, (UL[0], UL[0]/2, UL[1], UL[1]/2))
+  coordinates = np.append(coordinates, (UL[0]/2, 0, UL[1], UL[1]/2))
+  coordinates = np.append(coordinates, (0, UR[0]/2, UR[1], UR[1]/2))
+  coordinates = np.append(coordinates, (UR[0]/2, UR[0], UR[1], UR[1]/2))
+  
+  coordinates = np.append(coordinates, (UL[0], UL[0]/2, UL[1]/2, 0))
+  coordinates = np.append(coordinates, (UL[0]/2, 0, UL[1]/2, 0))
+  coordinates = np.append(coordinates, (0, UR[0]/2, UR[1]/2, 0))
+  coordinates = np.append(coordinates, (UR[0]/2, UR[0], UR[1]/2, 0))
+  
+  coordinates = np.append(coordinates, (LL[0], LL[0]/2, 0, LL[1]/2))
+  coordinates = np.append(coordinates, (LL[0]/2, 0, 0, LL[1]/2))
+  coordinates = np.append(coordinates, (0, LR[0]/2, 0, LR[1]/2))
+  coordinates = np.append(coordinates, (LR[0]/2, LR[0], 0, LR[1]/2))
+  
+  coordinates = np.append(coordinates, (LL[0], LL[0]/2, LL[1]/2, LL[1]))
+  coordinates = np.append(coordinates, (LL[0]/2, 0, LL[1]/2, LL[1]))
+  coordinates = np.append(coordinates, (0, LR[0]/2, LR[1]/2, LR[1]))
+  coordinates = np.append(coordinates, (LR[0]/2, LR[0], LR[1]/2, LR[1]))
 
   coordinates = coordinates.reshape((-1,4))
-  
   statistics(infile[0], outfile, table, external, coordinates)
 
 elif (action == 'FILTER_USUABLE'):
