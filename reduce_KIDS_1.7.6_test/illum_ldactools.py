@@ -8,6 +8,7 @@ import os
 import sys
 import getopt
 import ldac
+from scipy.optimize import curve_fit
 
 
 def filter_elements(data, key, value, condition):
@@ -229,16 +230,20 @@ def calculate_ellipse(coordinates, prefactors, center):
 	del cond2
 
 	distance = np.sqrt(XXcond2*XXcond2+YYcond2*YYcond2)
-	maxdistance = np.append(maxdistance, np.amax(distance))
-	area = np.append(area, len(epscond2.flatten()))
 
-	x = np.append(x, XXcond2[distance==maxdistance[k]])
-	y = np.append(y, YYcond2[distance==maxdistance[k]])
-	eps = np.append(eps, epscond2[distance==maxdistance[k]])
+	if (len(epscond2) != 0):
+	  maxdistancepart = np.amax(distance)
+	  maxdistance = np.append(maxdistance, maxdistancepart)
+	  area = np.append(area, len(epscond2.flatten()))
 
-	del XXcond2
-	del YYcond2
-	del epscond2
+	  x = np.append(x, XXcond2[distance==maxdistancepart])
+	  del XXcond2
+	  
+	  y = np.append(y, YYcond2[distance==maxdistancepart])
+	  del YYcond2
+	  
+	  eps = np.append(eps, epscond2[distance==maxdistancepart])
+	  del epscond2
 
   maxdistancefinal = np.amax(maxdistance)
   areafinal = np.sum(area)
@@ -426,8 +431,95 @@ def statistics(infile, outfile, table, external, coordinates):
       f.write("%s %.5f %.5f\n" % (name, output[name + '_before'], output[name + '_after']))
   f.close()
   
+
+# Magnitude - residual dependency
+def function_linear_plusOffset(x, A, B):
+  return A*x + B
+
+def function_linear(x, A):
+  return A*x 
   
+def mag_dependency(infile, outfile, table, realisation=0):
+  # Importing catalog.
+  data = ldac.LDACCat(infile)[table]
+  fmagdependency = open(outfile, "w")
   
+  for i in range(NUMCHIPS+1):
+    if (i == 0):
+      data2 = data
+    else:
+      data2 = filter_elements(data, 'CHIP', i, '=')
+
+    MagZP = np.array(data2['MagZP'], dtype=np.float64)
+    Residual = np.array(data2['Residual'], dtype=np.float64)
+    Residual_Err = np.array(data2['Residual_Err'], dtype=np.float64)
+    Mag_fitted = np.array(data2['Mag_fitted'], dtype=np.float64)
+    Residual_fitted = np.array(data2['Residual_fitted'], dtype=np.float64)
+    Residual_fitted_Err = np.array(data2['Residual_fitted_Err'], dtype=np.float64)
+    
+    # A = factor A
+    # B = factor B
+    # w = with
+    # wo = without
+    # O = Offset
+    # b = before
+    # a = after
+    # F = Fitting
+    # Linear fit with offset before illumination correction
+    p0 = np.array([0.0, 0.0])
+    best_par, cov_fit = curve_fit(function_linear_plusOffset, MagZP, Residual, p0, sigma=Residual_Err)
+    AwObF = best_par[0]
+    BwObF = best_par[1]
+    error = np.sqrt(np.diagonal(cov_fit))
+    AwObF_Err = error[0]
+    BwObF_Err = error[1]
+
+    # Linear fit with offset after illumination correction
+    p0 = np.array([0.0, 0.0])
+    best_par, cov_fit = curve_fit(function_linear_plusOffset, Mag_fitted, Residual_fitted, p0, sigma=Residual_fitted_Err)
+    AwOaF = best_par[0]
+    BwOaF = best_par[1]
+    error = np.sqrt(np.diagonal(cov_fit))
+    AwOaF_Err = error[0]
+    BwOaF_Err = error[1]
+
+    # Linear fit without offset before illumination correction
+    p0 = np.array([0.0])
+    best_par, cov_fit = curve_fit(function_linear, MagZP, Residual, p0, sigma=Residual_Err)
+    AwoObF = best_par[0]
+    error = np.sqrt(np.diagonal(cov_fit))
+    AwoObF_Err = error[0]
+
+    # Linear fit without offset after illumination correction
+    p0 = np.array([0.0])
+    best_par, cov_fit = curve_fit(function_linear, Mag_fitted, Residual_fitted, p0, sigma=Residual_fitted_Err)
+    AwoOaF = best_par[0]
+    error = np.sqrt(np.diagonal(cov_fit))
+    AwoOaF_Err = error[0]
+
+    
+    # Writing to file
+    # Format:
+    # 1: realisation (only important for bootstrapping, otherwise per default 0)
+    # 2: chip number (0 for all chips)
+    # 3: Factor A, with offset, before fitting
+    # 4: Factor A_Err, with offset, before fitting
+    # 5: Factor B, with offset, before fitting
+    # 6: Factor B_Err, with offset, before fitting
+    # 7: Factor A, with offset, after fitting
+    # 8: Factor A_Err, with offset, after fitting
+    # 9: Factor B, with offset, after fitting
+    # 10: Factor B_Err, with offset, after fitting
+    # 11: Factor A, without offset, before fitting
+    # 12: Factor A_Err, without offset, before fitting
+    # 13: Factor A, without offset, after fitting
+    # 14: Factor A_Err, without offset, after fitting
+    fmagdependency.write("%i %i %f %f %f %f %f %f %f %f %f %f %f %f\n" %(realisation, i, AwObF, AwObF_Err, BwObF, BwObF_Err, AwOaF, AwOaF_Err, BwOaF, BwOaF_Err, AwoObF, AwoObF_Err, AwoOaF, AwoOaF_Err))
+
+  fmagdependency.close()
+
+
+
 
 
 opts, args = getopt.getopt(sys.argv[1:], "i:o:t:k:a:v:c:e:", ["input=", "output=", "table=", "key=", "action=", "value=", "condition=", "external="])
@@ -601,7 +693,8 @@ elif (action == 'CALCS_AFTER_FITTING'):
 elif (action == 'STATISTICS'):
   # This action contains all statistic calculations.
   # The following argument have to within the "external" string in the following order:
-  # path and filename of file containing coefficients
+  # path and filename of file containing coefficients, split x-axis up into X parts,
+  # split y-axis up into Y parts
   global CHIPXMAX
   global CHIPYMAX
   global MAXCHIPX
@@ -620,17 +713,32 @@ elif (action == 'STATISTICS'):
   UR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
   
   coordinates = np.array([])
-  # Bottom left part of the camera
-  coordinates = np.append(coordinates, (LL[0],0,LL[1],0))
-  # Bottom right part of the camera.
-  coordinates = np.append(coordinates, (0,LR[0],LR[1],0))
-  # Upper left part of the camera.
-  coordinates = np.append(coordinates, (UL[0],0,0,UL[1]))
-  # Upper right part of the camera.
-  coordinates = np.append(coordinates, (0,UR[0],0,UR[1]))
+
+  parts_x = int(external[1])
+  parts_y = int(external[2])
+
+  step_x = int((np.abs(LL[0]) + np.abs(UR[0])) / parts_x)
+  step_y = int((np.abs(LL[1]) + np.abs(UR[1])) / parts_y)
+
+  for y in range(parts_y):
+    begin_y = LL[1] + y*step_y
+    
+    if (y == (parts_y - 1)):
+      end_y = UR[1] + 1
+    else:
+      end_y = begin_y + step_y
+    
+    for x in range(parts_x):
+      begin_x = LL[0] + x*step_x
+      
+      if (x == (parts_x - 1)):
+	end_x = UR[0] + 1
+      else:
+	end_x = begin_x + step_x
+    
+      coordinates = np.append(coordinates, (begin_x, end_x, begin_y, end_y))
 
   coordinates = coordinates.reshape((-1,4))
-  
   statistics(infile[0], outfile, table, external, coordinates)
 
 elif (action == 'FILTER_USUABLE'):
@@ -658,3 +766,6 @@ elif (action == 'CHECK_ENOUGH_OBJECTS'):
   data = ldac.LDACCat(infile[0])[table]
   data_chip = filter_elements(data, 'CHIP', value, "=")
   print(len(data_chip))
+
+elif (action == 'MAG_DEPENDENCY'):
+  mag_dependency(infile[0], outfile, table)
