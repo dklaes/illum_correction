@@ -251,7 +251,7 @@ do
 			-e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt ${FILTER}"
 
   ${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
-			-a STATISTICS -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt" \
+			-a STATISTICS -e "${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/coeffs.txt 10 10" \
 			-o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/stats.txt
 
   ${P_PYTHON} illum_ldactools.py -i ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered_fitted.cat -t PSSC \
