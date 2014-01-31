@@ -693,7 +693,8 @@ elif (action == 'CALCS_AFTER_FITTING'):
 elif (action == 'STATISTICS'):
   # This action contains all statistic calculations.
   # The following argument have to within the "external" string in the following order:
-  # path and filename of file containing coefficients
+  # path and filename of file containing coefficients, split x-axis up into X parts,
+  # split y-axis up into Y parts
   global CHIPXMAX
   global CHIPYMAX
   global MAXCHIPX
@@ -712,25 +713,30 @@ elif (action == 'STATISTICS'):
   UR = np.array([int((os.popen("echo ${OFFSETX} | awk '{print $" + str(MAXCHIPX) + "}'").readlines())[0]) + CHIPXMAX, int((os.popen("echo ${OFFSETY} | awk '{print $" + str(MAXCHIPY*MAXCHIPX) + "}'").readlines())[0]) + CHIPYMAX])
   
   coordinates = np.array([])
-  coordinates = np.append(coordinates, (UL[0], UL[0]/2, UL[1]/2 + 1, UL[1]))
-  coordinates = np.append(coordinates, (UL[0]/2 + 1, 0, UL[1]/2 + 1, UL[1]))
-  coordinates = np.append(coordinates, (0 + 1, UR[0]/2, UR[1]/2 + 1, UR[1]))
-  coordinates = np.append(coordinates, (UR[0]/2 + 1, UR[0], UR[1]/2 + 1, UR[1]))
-  
-  coordinates = np.append(coordinates, (UL[0], UL[0]/2, 0 + 1, UL[1]/2))
-  coordinates = np.append(coordinates, (UL[0]/2 + 1, 0, 0 + 1, UL[1]/2))
-  coordinates = np.append(coordinates, (0 + 1, UR[0]/2, 0 + 1, UR[1]/2))
-  coordinates = np.append(coordinates, (UR[0]/2 + 1, UR[0], 0 + 1, UR[1]/2))
-  
-  coordinates = np.append(coordinates, (LL[0], LL[0]/2, LL[1]/2 + 1, 0))
-  coordinates = np.append(coordinates, (LL[0]/2 + 1, 0, LL[1]/2 + 1, 0))
-  coordinates = np.append(coordinates, (0 + 1, LR[0]/2, LR[1]/2 + 1, 0))
-  coordinates = np.append(coordinates, (LR[0]/2 + 1, LR[0], LR[1]/2 + 1, 0))
-  
-  coordinates = np.append(coordinates, (LL[0], LL[0]/2, LL[1], LL[1]/2))
-  coordinates = np.append(coordinates, (LL[0]/2 + 1, 0, LL[1], LL[1]/2))
-  coordinates = np.append(coordinates, (0 + 1, LR[0]/2, LR[1], LR[1]/2))
-  coordinates = np.append(coordinates, (LR[0]/2 + 1, LR[0], LR[1], LR[1]/2))
+
+  parts_x = int(external[1])
+  parts_y = int(external[2])
+
+  step_x = int((np.abs(LL[0]) + np.abs(UR[0])) / parts_x)
+  step_y = int((np.abs(LL[1]) + np.abs(UR[1])) / parts_y)
+
+  for y in range(parts_y):
+    begin_y = LL[1] + y*step_y
+    
+    if (y == (parts_y - 1)):
+      end_y = UR[1] + 1
+    else:
+      end_y = begin_y + step_y
+    
+    for x in range(parts_x):
+      begin_x = LL[0] + x*step_x
+      
+      if (x == (parts_x - 1)):
+	end_x = UR[0] + 1
+      else:
+	end_x = begin_x + step_x
+    
+      coordinates = np.append(coordinates, (begin_x, end_x, begin_y, end_y))
 
   coordinates = coordinates.reshape((-1,4))
   statistics(infile[0], outfile, table, external, coordinates)
