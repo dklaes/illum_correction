@@ -519,7 +519,12 @@ def mag_dependency(infile, outfile, table, realisation=0):
   fmagdependency.close()
 
 
-
+def keytoasc (infile, outfile, table, key):
+  data = ldac.LDACCat(infile)[table][key]
+  asc = open(outfile, "w")
+  for i in range(len(data)):
+    asc.write("%d\n" % (data[i]))
+  asc.close()
 
 
 opts, args = getopt.getopt(sys.argv[1:], "i:o:t:k:a:v:c:e:", ["input=", "output=", "table=", "key=", "action=", "value=", "condition=", "external="])
@@ -769,3 +774,6 @@ elif (action == 'CHECK_ENOUGH_OBJECTS'):
 
 elif (action == 'MAG_DEPENDENCY'):
   mag_dependency(infile[0], outfile, table)
+
+elif (action == 'KEYTOASC'):
+  keytoasc (infile[0], outfile, table, key)
