@@ -129,7 +129,7 @@ if [ "${CATS}" == "" ]; then
 theli_error "No standard catalogue matched catalogues available!"
   exit 1;
 else
-  ${P_PYTHON} illum_ldactools.py -i "${CATS}" -t PSSC -a PASTE_CATALOGS \
+  ${P_PYTHON} illum_ldactools.py -i "${CATS}" -t PSSC -a PASTE_TABLES \
                  -o ${TEMPDIR}/tmp_exp.cat_$$
 fi
 
