@@ -1,7 +1,7 @@
 ###############
 # @file ldac.py
 # @author Douglas Applegate & Thomas Erben & Dominik Klaes
-# @date 16/01/2014
+# @date 20/02/2014
 #
 # @brief Utilities to make accessing LDAC cats easier
 ###############
@@ -38,6 +38,10 @@
 # of HDU changed from a method to a simple 'int' in different pyfits
 # versions. Hence it is useless for code that should be compatible
 # to different versions of pyfits.
+#
+# 20.02.2014
+# Dominik Klaes: I implemented adding tables (appending one table to
+# the other one).
 
 """
 Wrapper module to work with LDAC catalogues and tables
