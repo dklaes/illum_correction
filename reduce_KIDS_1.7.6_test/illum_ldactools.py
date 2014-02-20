@@ -519,7 +519,12 @@ def mag_dependency(infile, outfile, table, realisation=0):
   fmagdependency.close()
 
 
-
+def keytoasc (infile, outfile, table, key):
+  data = ldac.LDACCat(infile)[table][key]
+  asc = open(outfile, "w")
+  for i in range(len(data)):
+    asc.write("%d\n" % (data[i]))
+  asc.close()
 
 
 opts, args = getopt.getopt(sys.argv[1:], "i:o:t:k:a:v:c:e:", ["input=", "output=", "table=", "key=", "action=", "value=", "condition=", "external="])
@@ -564,8 +569,17 @@ elif (action == 'UNIQUE_ELEMENTS'):
   unique_elements(infile[0], table, key)
 
 
-elif (action == 'PASTE_CATALOGS'):
-  ldac.pasteCatalogs(infile, outfile=outfile, table=table, replace=True)
+elif (action == 'PASTE_TABLES'):
+  if len(infile) == 0:
+    print("No input catalogs!")
+  elif len(infile) == 1:
+    os.popen("cp " + infile + " " + outfile)
+  else:
+    a = ldac.LDACCat(infile[0])[table]
+    for i in range(len(infile)-1):
+      b = ldac.LDACCat(infile[i+1])[table]
+      a = a + b
+    a.saveas(outfile, clobber=True)
 
 
 elif (action == 'CALCS_BEFORE_FITTING'):
@@ -769,3 +783,6 @@ elif (action == 'CHECK_ENOUGH_OBJECTS'):
 
 elif (action == 'MAG_DEPENDENCY'):
   mag_dependency(infile[0], outfile, table)
+
+elif (action == 'KEYTOASC'):
+  keytoasc (infile[0], outfile, table, key)
