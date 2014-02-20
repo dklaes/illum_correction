@@ -569,8 +569,17 @@ elif (action == 'UNIQUE_ELEMENTS'):
   unique_elements(infile[0], table, key)
 
 
-elif (action == 'PASTE_CATALOGS'):
-  ldac.pasteCatalogs(infile, outfile=outfile, table=table, replace=True)
+elif (action == 'PASTE_TABLES'):
+  if len(infile) == 0:
+    print("No input catalogs!")
+  elif len(infile) == 1:
+    os.popen("cp " + infile + " " + outfile)
+  else:
+    a = ldac.LDACCat(infile[0])[table]
+    for i in range(len(infile)-1):
+      b = ldac.LDACCat(infile[i+1])[table]
+      a = a + b
+    a.saveas(outfile, clobber=True)
 
 
 elif (action == 'CALCS_BEFORE_FITTING'):
