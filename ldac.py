@@ -83,6 +83,7 @@ class LDACCat(object):
         # for an empty catalogue this list is empty:
         self.ldactables = []
         self.header = None
+	self.isprimarydatatable = []
 
         if cat != None:
             # read tables from a catalogue on disk:
@@ -92,8 +93,15 @@ class LDACCat(object):
                 for hdu in hdulist:
                     if isinstance(hdu, pyfits.PrimaryHDU) == True:
                         self.header = hdu.header
+			if hdu.data.size != 0:
+				self.ldactables.append(LDACTable(hdu))
+			self.isprimarydatatable.append(1)
                     if isinstance(hdu, pyfits.BinTableHDU) == True:
                         self.ldactables.append(LDACTable(hdu))
+                        self.isprimarydatatable.append(0)
+                    if isinstance(hdu, pyfits.ImageHDU) == True:
+                        self.ldactables.append(LDACTable(hdu))
+                        self.isprimarydatatable.append(0)
 
     def __len__(self):
         """
@@ -200,11 +208,17 @@ class LDACCat(object):
                                  # tables to file 'test.cat'
         """
 
-        primaryHDU = pyfits.PrimaryHDU(header=self.header)
-        hdulist = pyfits.HDUList([primaryHDU])
-
-        for table in self.ldactables:
-            hdulist.append(table.hdu)
+	if self.isprimarydatatable[0] == 0:
+	        primaryHDU = pyfits.PrimaryHDU(header=self.header)
+	        hdulist = pyfits.HDUList([primaryHDU])
+        	for table in self.ldactables:
+	            hdulist.append(table.hdu)
+	else:
+		primaryHDU = pyfits.PrimaryHDU(data=self.ldactables[0].hdu.data, header=self.ldactables[0].hdu.header)
+	        hdulist = pyfits.HDUList([primaryHDU])
+        	for table in self.ldactables:
+	            if table != self.ldactables[0]:
+			    hdulist.append(table.hdu)
 
         hdulist.writeto(file, clobber=clobber)
         
