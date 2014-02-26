@@ -140,16 +140,34 @@ ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat_$$ \
 		  -o ${TEMPDIR}/tmp_exp_filter.cat_$$ \
 		  -t PSSC -a FILTER_USUABLE -e "${FILTER} ${COLOR}"
 
+# Checking if we have still objects at all.
+if [ ! -e "${TEMPDIR}/tmp_exp_filter.cat_$$" ]; then
+  theli_error "No temporary file after ${FILTER}mag<99 filtering available!"
+  exit 1;
+else
+  NUMOBJECTS=`${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp_filter.cat_$$ -t PSSC -a NUMBER_OF_ELEMENTS`
+  if [ ${NUMOBJECTS} -eq 0 ]; then
+	  theli_error "No objects left after ${FILTER}mag<99 filtering!"
+	  exit 1;
+  fi
+fi
+
 ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp_filter.cat_$$ \
 		  -o ${TEMPDIR}/tmp_exp.cat2_$$ \
 		  -a FILTER_ELEMENTS \
 		  -t PSSC -k BADCCD \
-		  -c "=" -v 1
+		  -c "=" -v 0
 
 # Checking if we have still objects at all.
 if [ ! -e "${TEMPDIR}/tmp_exp.cat2_$$" ]; then
-  theli_error "No objects left after ${FILTER}mag<99 filtering!"
+  theli_error "No temporary file after BADCCD flag filtering available!"
   exit 1;
+else
+  NUMOBJECTS=`${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat2_$$ -t PSSC -a NUMBER_OF_ELEMENTS`
+  if [ ${NUMOBJECTS} -eq 0 ]; then
+	  theli_error "No objects left after BADCCD flag filtering!"
+	  exit 1;
+  fi
 fi
 
 
