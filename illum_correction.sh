@@ -137,8 +137,14 @@ fi
 # (for performance reasons).
 # Filtering only those detected source with a mag in a certain filter less 99mag
 ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat_$$ \
-		  -o ${TEMPDIR}/tmp_exp.cat2_$$ \
+		  -o ${TEMPDIR}/tmp_exp_filter.cat_$$ \
 		  -t PSSC -a FILTER_USUABLE -e "${FILTER} ${COLOR}"
+
+${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp_filter.cat_$$ \
+		  -o ${TEMPDIR}/tmp_exp.cat2_$$ \
+		  -a FILTER_ELEMENTS \
+		  -t PSSC -k BADCCD \
+		  -c "=" -v 1
 
 # Checking if we have still objects at all.
 if [ ! -e "${TEMPDIR}/tmp_exp.cat2_$$" ]; then
@@ -172,6 +178,7 @@ do
   else
     ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_exp.cat2_$$ \
 		    -o ${TEMPDIR}/tmp_exp.cat3_$$ \
+		    -a FILTER_ELEMENTS \
 		    -t PSSC -k GABODSID \
 		    -c "=" -v ${NIGHT}
   fi
