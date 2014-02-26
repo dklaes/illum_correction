@@ -1,7 +1,7 @@
 ###############
 # @file ldac.py
 # @author Douglas Applegate & Thomas Erben & Dominik Klaes
-# @date 16/01/2014
+# @date 20/02/2014
 #
 # @brief Utilities to make accessing LDAC cats easier
 ###############
@@ -38,6 +38,10 @@
 # of HDU changed from a method to a simple 'int' in different pyfits
 # versions. Hence it is useless for code that should be compatible
 # to different versions of pyfits.
+#
+# 20.02.2014
+# Dominik Klaes: I implemented adding tables (appending one table to
+# the other one).
 
 """
 Wrapper module to work with LDAC catalogues and tables
@@ -79,6 +83,7 @@ class LDACCat(object):
         # for an empty catalogue this list is empty:
         self.ldactables = []
         self.header = None
+	self.isprimarydatatable = []
 
         if cat != None:
             # read tables from a catalogue on disk:
@@ -88,8 +93,15 @@ class LDACCat(object):
                 for hdu in hdulist:
                     if isinstance(hdu, pyfits.PrimaryHDU) == True:
                         self.header = hdu.header
+			if hdu.size() != 0:
+				self.ldactables.append(LDACTable(hdu))
+				self.isprimarydatatable.append(1)
                     if isinstance(hdu, pyfits.BinTableHDU) == True:
                         self.ldactables.append(LDACTable(hdu))
+                        self.isprimarydatatable.append(0)
+                    if isinstance(hdu, pyfits.ImageHDU) == True:
+                        self.ldactables.append(LDACTable(hdu))
+                        self.isprimarydatatable.append(0)
 
     def __len__(self):
         """
@@ -196,11 +208,17 @@ class LDACCat(object):
                                  # tables to file 'test.cat'
         """
 
-        primaryHDU = pyfits.PrimaryHDU(header=self.header)
-        hdulist = pyfits.HDUList([primaryHDU])
-
-        for table in self.ldactables:
-            hdulist.append(table.hdu)
+	if self.isprimarydatatable[0] == 0:
+	        primaryHDU = pyfits.PrimaryHDU(header=self.header)
+	        hdulist = pyfits.HDUList([primaryHDU])
+        	for table in self.ldactables:
+	            hdulist.append(table.hdu)
+	else:
+		primaryHDU = pyfits.PrimaryHDU(data=self.ldactables[0].hdu.data, header=self.ldactables[0].hdu.header)
+	        hdulist = pyfits.HDUList([primaryHDU])
+        	for table in self.ldactables:
+	            if table != self.ldactables[0]:
+			    hdulist.append(table.hdu)
 
         hdulist.writeto(file, clobber=clobber)
         
@@ -378,6 +396,43 @@ class LDACTable(object):
 
         self.hdu.writeto(file, clobber=clobber)
 
+    def __add__(a, b):
+        """
+        Appends table b to table a and returns a LDAC table.
+        
+        >>> c = a + b   # appends table b to a and saves it
+                        # as a LDAC table again
+        """
+        
+        # First check if both tables have the same number of
+        # columns:
+        if len(a.keys()) != len(b.keys()):
+	  print "Tables have not the same number of columns / keywords!"
+	  print "First table has " + str(len(a.keys())) + " colums / keywords."
+	  print "Second table has " + str(len(b.keys())) + " colums / keywords."
+	  return None
+
+        # Now let's check if all kewords from the first table are also
+        # present in the second table and also at the same place!
+        for i in range(len(a.keys())):
+	  if b.has_key(a.keys()[i]) == False:
+	    print "Key " + str(a.keys()[i]) + " is not present in the second table!"
+	    return None
+        
+        arows = a.hdu.data.shape[0]
+        brows = b.hdu.data.shape[0]
+        nrows = arows + brows
+        hdu = pyfits.new_table(a.hdu.columns, nrows=nrows)
+        print hdu
+	
+        for i in a.keys():
+          hdu.data.field(i)[arows:] = b.hdu.data.field(i)
+
+        hdu.header = a.hdu.header
+        hdu.header.update('NAXIS2', nrows)
+        hdu.columns = a.hdu.columns
+      
+        return LDACTable(hdu)
 
 def openObjects(hdulist, table='OBJECTS'):
     tablehdu = None
@@ -404,37 +459,3 @@ def openObjectFile(filename, table='OBJECTS'):
         return None
 
     return openObjects(hdulist, table)
-
-def pasteCatalogs(infiles, outfile='out.cat', table='OBJECTS', replace=False):
-  """
-  This function pastes several catalogs into one.
-  
-  - infiles contains all input catalogs as a list
-  - outfile is the filename of the output catalog, default is out.cat
-  - table gives the table name that shall be used, default is OBJECTS
-  - replace gives the information if an already existing file should be overritten if
-    it is already existing, default is False (no overwriting)
-  
-  Example:
-  >>> ldac.pasteCatalogs(['input1.cat', 'input2.cat'], outfile='outfile.cat', table='PSSC')
-  """
-  
-  nrows = 0
-  firstfile = pyfits.open(infiles[0])
-  firstfilerows = firstfile[table].data.shape[0]
-  for file in infiles:
-    nextfile = pyfits.open(file)
-    nrows = nrows + nextfile[table].data.shape[0]
-  hdu = pyfits.new_table(firstfile[table].columns, nrows=nrows)
-  
-  position=0
-  for file in infiles:
-    hdulist = pyfits.open(file)
-    filerows = hdulist[table].data.shape[0]
-    for i in range(len(firstfile[table].columns)):
-      hdu.data.field(i)[position:(position+filerows)]=hdulist[table].data.field(i)
-    position = position + filerows
-  hdu.header = firstfile[table].header
-  hdu.header.update('NAXIS2', nrows)
-  hdu.columns = firstfile[table].columns
-  hdu.writeto(outfile, clobber=replace)
