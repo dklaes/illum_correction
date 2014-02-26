@@ -148,8 +148,12 @@ do
                       -t STDTAB -k A_WORLD A_WCS B_WORLD B_WCS \
                                    THETA_J2000 THETAWCS
       ${P_LDACADDKEY} -i ${TEMPDIR}/tmp.cat12_$$ -t STDTAB \
-		      -o ${MD}/${SD}/cat/${BASE}_photprep.cat \
+                      -o ${TEMPDIR}/tmp.cat13_$$ \
 		      -k CHIP ${CHIP} SHORT ""
+      BADCCD=`${P_DFITS} /${MD}/${SD}/${BASE}.fits | fitsort BADCCD | grep ${BASE} | ${P_GAWK} '{print $2}'`
+      ${P_LDACADDKEY} -i ${TEMPDIR}/tmp.cat13_$$ -t STDTAB \
+		      -o ${MD}/${SD}/cat/${BASE}_photprep.cat \
+		      -k BADCCD ${BADCCD} SHORT "Is_CCD_Bad_(1=Yes)"
     done
   else # if [ "${CATS}" != "" ]
     theli_warn "No catalogues for Chip ${CHIP} available!" "${!#}"
