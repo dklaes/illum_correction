@@ -695,7 +695,7 @@ elif (action == 'FILTER_SIGMA'):
   data2 = filter_elements(data, key, mean-sigmawidth*sigma, '>')
   data = filter_elements(data2, key, mean+sigmawidth*sigma, '<')
   
-  header.add_history('Sigma clipping filter (sigma = ' + str(sigma) + ', sigmawidth = ' str(sigmawidth) + '): ' + str(mean-sigmawidth*sigma) + ' < ' + str(key) + ' < ' + str(mean+sigmawidth*sigma) + '.')
+  header.add_history('Sigma clipping filter (sigma = ' + str(sigma) + ', sigmawidth = ' + str(sigmawidth) + '): ' + str(mean-sigmawidth*sigma) + ' < ' + str(key) + ' < ' + str(mean+sigmawidth*sigma) + '.')
   data.saveas(outfile, clobber=replace)
 
 
