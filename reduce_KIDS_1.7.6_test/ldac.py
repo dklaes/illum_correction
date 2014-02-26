@@ -423,9 +423,9 @@ class LDACTable(object):
         brows = b.hdu.data.shape[0]
         nrows = arows + brows
         hdu = pyfits.new_table(a.hdu.columns, nrows=nrows)
-        print hdu
 	
         for i in a.keys():
+	  hdu.data.field(i)[:arows] = a.hdu.data.field(i)
           hdu.data.field(i)[arows:] = b.hdu.data.field(i)
 
         hdu.header = a.hdu.header
