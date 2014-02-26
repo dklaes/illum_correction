@@ -93,9 +93,9 @@ class LDACCat(object):
                 for hdu in hdulist:
                     if isinstance(hdu, pyfits.PrimaryHDU) == True:
                         self.header = hdu.header
-			if hdu.data.size != 0:
+			if hdu.size() != 0:
 				self.ldactables.append(LDACTable(hdu))
-			self.isprimarydatatable.append(1)
+				self.isprimarydatatable.append(1)
                     if isinstance(hdu, pyfits.BinTableHDU) == True:
                         self.ldactables.append(LDACTable(hdu))
                         self.isprimarydatatable.append(0)
