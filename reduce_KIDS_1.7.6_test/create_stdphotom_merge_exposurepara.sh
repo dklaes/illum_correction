@@ -72,6 +72,7 @@ echo "Ypos" >> add2.txt_$$
 echo "Xpos_global" >> add2.txt_$$
 echo "Ypos_global" >> add2.txt_$$
 echo "CHIP" >> add2.txt_$$
+echo "BADCCD" >> add2.txt_$$
 
 while read COL
 do
