@@ -1,7 +1,7 @@
 ###############
 # @file ldac.py
 # @author Douglas Applegate & Thomas Erben & Dominik Klaes
-# @date 20/02/2014
+# @date 26/02/2014
 #
 # @brief Utilities to make accessing LDAC cats easier
 ###############
@@ -42,6 +42,11 @@
 # 20.02.2014
 # Dominik Klaes: I implemented adding tables (appending one table to
 # the other one).
+#
+# 26.02.2014
+# Dominik Klaes: Bug fixed if more than one table is added. Also implemented
+# the possibilty to read and save ImageHDUs and also data in the PrimaryHDU.
+# These can be accessed via table.hdu.data .
 
 """
 Wrapper module to work with LDAC catalogues and tables
