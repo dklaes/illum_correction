@@ -92,7 +92,7 @@ def calcs_before_fitting(infile, outfile, table, external, replace=False):
   reference_err = data[filtername + '_err']
   Xpos_global = data['Xpos_global']
   Ypos_global = data['Ypos_global']
-  
+
   data['MagZP'] = Mag + ZP + EXT*AIRMASS + COLCOEFF*COLOR
   MagZP = data['MagZP']
   
@@ -780,6 +780,8 @@ elif (action == 'FILTER_USUABLE'):
   data5 = filter_elements(data4, color1, -9999, '>')
   data6 = filter_elements(data5, color2, 99, '<')
   data7 = filter_elements(data6, color2, -9999, '>')
+  data8 = filter_elements(data7, colorname, 10, '<')
+  data = filter_elements(data8, colorname, -10, '>')
   
   header.add_history('Filter usuable magnitude values for both color filters and reference filter, meaning between -9999 and 99.')
   data.saveas(outfile, clobber=replace)
