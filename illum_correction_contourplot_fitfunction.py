@@ -323,15 +323,18 @@ def plot(arg):
     lab.clf()
     fig = plt.figure()
 
+    resmax = np.round(np.amax(np.amax(data['Residual']),np.amax(data['Residual_fitted'])),2)
+    resmin = np.round(np.amin(np.amin(data['Residual']),np.amin(data['Residual_fitted'])),2)
+
     # 1
     ax1 = fig.add_subplot(2, 1, 1)
     ax1.plot(data['MagZP'],data['Residual'],'k,')
-    appearance('','Residual','', '','', 'grid', 'nocamgrid', ax1, 'sub')
+    appearance('','Residual','', '', [resmin, resmax], 'grid', 'nocamgrid', ax1, 'sub')
 
     # 2
     ax2 = fig.add_subplot(2, 1, 2)
     ax2.plot(data['Mag_fitted'],data['Residual_fitted'],'k,')
-    appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax2, 'sub')
+    appearance('MAG_AUTO before / after fitting','Residual','', '', [resmin, resmax], 'grid', 'nocamgrid', ax2, 'sub')
     
     lab.savefig(path + 'mag_dependency.png')
     plt.close()
@@ -344,7 +347,7 @@ def plot(arg):
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
     ax1.plot(data['MagZP'],data['Residual'],'k,')
-    appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax1, 'sub')
+    appearance('MAG_AUTO','Residual','', '', [resmin, resmax], 'grid', 'nocamgrid', ax1, 'sub')
     lab.savefig(path + 'single_plots/' + 'mag_dependency_1.png')
     plt.close()
     
@@ -353,7 +356,7 @@ def plot(arg):
     fig = plt.figure()
     ax2 = fig.add_subplot(1, 1, 1)
     ax2.plot(data['Mag_fitted'],data['Residual_fitted'],'k,')
-    appearance('Mag','Residual','', '','', 'grid', 'nocamgrid', ax2, 'sub')
+    appearance('MAG_AUTO','Residual','', '', [resmin, resmax], 'grid', 'nocamgrid', ax2, 'sub')
     lab.savefig(path + 'single_plots/' + 'mag_dependency_2.png')
     plt.close()
     
@@ -365,7 +368,6 @@ def plot(arg):
     # 3:	Lower left:	Before fitting, from y-axis
     # 4:	Lower right:	After fitting, from y-axis
 
-    #datamax = np.amax((np.fabs(d[:,6]), np.fabs(d[:,10])))
     datamax = np.amax((np.fabs(data['Residual']), np.fabs(data['Residual_fitted'])))
     
     lab.clf()
@@ -450,12 +452,12 @@ def plot(arg):
     # 2
     ax2 = fig.add_subplot(2, 2, 2)
     ax2.hist(data['Residual_fitted'],bins=BIN, range=(-sigma,sigma))
-    appearance('Residual','','After fitting', [-sigma, sigma], '', 'grid', 'nocamgrid', ax2, 'sub')
+    appearance('','','After fitting', [-sigma, sigma], '', 'grid', 'nocamgrid', ax2, 'sub')
     
     # 1
     ax1 = fig.add_subplot(2, 2, 1)
     ax1.hist(data['Residual'],bins=BIN, range=(-sigma,sigma))
-    appearance('Residual','Number of objects','Before fitting', [-sigma, sigma], ax2.set_ylim(), 'grid', 'nocamgrid', ax1, 'sub')
+    appearance('','Number of objects','Before fitting', [-sigma, sigma], ax2.set_ylim(), 'grid', 'nocamgrid', ax1, 'sub')
     
     # 4
     ax4 = fig.add_subplot(2, 2, 4)
@@ -542,7 +544,7 @@ def plot(arg):
     ax3 = fig.add_subplot(2, 2, 3, aspect='equal')
     plt.setp(ax3.get_xticklabels(), visible=True)
     plt.setp(ax3.get_yticklabels(), visible=True)
-    axbar = ax3.contourf(xi, yi, zi13,levels=levels_limit)
+    axbar = ax3.contourf(xi, yi, zi13,levels=np.round(levels_limit,2))
     fig.colorbar(axbar)
     ax3.contourf(xi, yi, zi13, levels=levels_limit)
     appearance('Xpos','Ypos','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
@@ -563,7 +565,7 @@ def plot(arg):
     ax4 = fig.add_subplot(2, 2, 4, aspect='equal')
     plt.setp(ax4.get_xticklabels(), visible=True)
     plt.setp(ax4.get_yticklabels(), visible=False)
-    axbar = ax4.contourf(xi, yi, zi24, levels=levels_limit)
+    axbar = ax4.contourf(xi, yi, zi24, levels=np.round(levels_limit,2))
     fig.colorbar(axbar)
     ax4.contourf(xi, yi, zi24, levels=levels_limit)
     appearance('Xpos','','', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
@@ -591,7 +593,7 @@ def plot(arg):
     ax3 = fig.add_subplot(1, 1, 1, aspect='equal')
     axbar = ax3.contourf(xi, yi, zi13,levels=levels_limit)
     fig.colorbar(axbar)
-    ax3.contourf(xi, yi, zi13, levels=levels_limit)
+    ax3.contourf(xi, yi, zi13, levels=np.round(levels_limit,2))
     appearance('Xpos','Ypos','Before fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax3, 'sub')
     lab.savefig(path + 'single_plots/' + 'contourplots_3.png')
     plt.close()
@@ -613,7 +615,7 @@ def plot(arg):
     ax4 = fig.add_subplot(1, 1, 1, aspect='equal')
     axbar = ax4.contourf(xi, yi, zi24, levels=levels_limit)
     fig.colorbar(axbar)
-    ax4.contourf(xi, yi, zi24, levels=levels_limit)
+    ax4.contourf(xi, yi, zi24, levels=np.round(levels_limit,2))
     appearance('Xpos','Ypos','After fitting', [CAMXMIN, CAMXMAX], [CAMYMIN, CAMYMAX], 'nogrid', 'camgrid', ax4, 'sub')
     lab.savefig(path + 'single_plots/' + 'contourplots_4.png')
     plt.close()
