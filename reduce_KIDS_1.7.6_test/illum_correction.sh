@@ -289,7 +289,7 @@ done
 
 
 # Cleaning up...
-#rm ${TEMPDIR}/*_$$ &
+rm ${TEMPDIR}/*_$$
 
 theli_end
 exit 0;
