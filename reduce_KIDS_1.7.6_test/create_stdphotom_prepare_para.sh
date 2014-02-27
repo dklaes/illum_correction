@@ -149,7 +149,7 @@ do
                                    THETA_J2000 THETAWCS
       ${P_LDACADDKEY} -i ${TEMPDIR}/tmp.cat12_$$ -t STDTAB \
                       -o ${TEMPDIR}/tmp.cat13_$$ \
-		      -k CHIP ${CHIP} SHORT ""
+		      -k CHIP ${CHIP} SHORT "Object on chip X"
       BADCCD=`${P_DFITS} /${MD}/${SD}/${BASE}.fits | fitsort BADCCD | grep ${BASE} | ${P_GAWK} '{print $2}'`
       ${P_LDACADDKEY} -i ${TEMPDIR}/tmp.cat13_$$ -t STDTAB \
 		      -o ${MD}/${SD}/cat/${BASE}_photprep.cat \
