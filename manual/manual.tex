@@ -1,0 +1,115 @@
+%### documentclass und packages
+%###################################################
+
+%\documentclass[11pt, abstracton, twoside]{scrreprt}
+\documentclass[11pt, abstracton, twoside]{scrbook}
+\usepackage{amsmath}
+\usepackage[ngerman, english]{babel}
+\usepackage[amssymb]{SIunits}
+\usepackage{graphicx}
+\usepackage{braket}
+\usepackage{rotating}
+\usepackage{subfigure}
+\usepackage{float}
+\usepackage{cite}
+%\usepackage{url}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{aas_macros}
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{placeins}
+
+%### kopfzeilen
+%###################################################
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\usepackage{calc}
+\fancyheadoffset[LE,RO]{\marginparsep+\marginparwidth}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\fancyhf{}
+\fancyhead[LE,RO]{\bfseries\thepage}
+\fancyhead[LO]{\bfseries\rightmark}
+\fancyhead[RE]{\bfseries\leftmark}
+%\fancyfoot[C]{\thepage}
+\fancypagestyle{plain}{%
+\fancyhead{} % get rid of headers
+\renewcommand{\headrulewidth}{0pt} % and the line
+}
+
+%### geometry
+%###################################################
+
+%\usepackage{geometry}
+%\geometry{a4paper,left=30mm,right=20mm, bottom=35mm}
+\geometry{a4paper}
+%\usepackage{color}
+
+
+%### Titelseite
+%###################################################
+
+\title{\textbf{Manual for the illumination correction in THELI}}
+%\vspace{\baselineskip}
+\author{
+\Large{Dominik Klaes}
+\\
+\\
+Argelander Institute for Astronomy
+Auf dem H\"ugel 71
+53121 Bonn
+Germany
+angefertigt am Argelander-Institut f\"ur Astronomie
+\\
+\\
+\\
+\\
+Contact: dklaes@astro.uni-bonn.de
+\\
+\\
+\\}
+\date{\today}
+
+%### Makros
+%###################################################
+
+\newcommand{\kms}{\kilo\metre\,\second^{-1}}
+\newcommand{\parsec}{pc}
+\newcommand{\pc}{pc}
+\newcommand{\yr}{yr}
+
+%### Titel, Erklaerung, Inhaltsverzeichnis etc
+%###################################################
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+
+%### Einzelne Kapitel
+%###################################################
+
+\input{manual_illum_correction}
+\input{manual_apply}
+\input{manual_duration}
+
+%### Bibliography
+%###################################################
+
+%\bibliography{Masterarbeit_Literatur.bib}{}
+%\bibliographystyle{plain}
+
+%### Anhang
+%###################################################
+
+%\newpage
+
+%\appendix
+
+\end{document}

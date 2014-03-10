@@ -1,0 +1,27 @@
+\section{Applying illumination correction}
+\label{sec:ApplyingIlluminationCorrection}
+With the FITS files created in the last step, they have to be applied to the reduced data like SCIENCE, SCIENCESHORT and/or STANDARD images. This task is done by another bash script (illum\_apply.sh). Also, this script contains detailed information about the required command line arguments and an history of changes. On github, every single change is covered with a small notice. The needed command line arguments are (in this order):
+\begin{table}[H]
+\centering
+\begin{tabular}{lp{11.5cm}}
+MAIND: & Main directory\\
+APPLYD: & Directory where the files are that need to be corrected\\
+STANDARDD: & Directory to files used for zeropoint calculation / illumination correction from main directory\\
+FILTERNAME: & Used filtername, e.g. r\_SDSS\\
+EXTENSION: & In \textrm{THELI} all files have an extension depending on reduction steps. This is needed to find all files.\\
+MODE: & Depending on the zeropoint calibration, an illumination correction can be done by using all data from one run ("RUNCLAIB") or each night individually ("NIGHTCALIB").\\
+NPROC: & Number of maximum parallel processes. This number should not be too high due to too high I/O.\\
+ & Recommended value: 16\\
+ILLUMDIR: & If the illumination correction was done before and saved in another directory, as it is done with bias and flat images, this argument is different from STANDARDD.
+\end{tabular}
+\caption{List of command line arguments for applying script}
+\label{tab:CommandLineArgumentsApplyingScript}
+\end{table}
+Furthermore several (sanity) checks are done in the beginning and during filtering. They cover all problems occurred during development but might not be complete!
+\begin{itemize}
+\item \textbf{Number of command line arguments:} In the current configuration, exactly eight arguments have to be given (cf. table \ref{tab:CommandLineArgumentsApplyingScript}). If more or less are given, the script ends with an error.
+\item \textbf{Folder presence:} If already corrected files are detected, the script requires to delete those files and ends with an error.
+\item \textbf{Runmode:} As written in table \ref{tab:CommandLineArgumentsApplyingScript}, the script needs to know in which mode (RUN or NIGHT) the illumination correction was done. If this arguments does not match with one of the two just mentioned, the script will end with an error.
+\item \textbf{Illumination correction presence:} It is checked if for all nights FITS files are present. If not, the script will end with an error.
+\end{itemize}
+Afterwards a list with files is created and distributed to NPROC number of processes. The old files are moved to a backup folder named EXTENSION\_IMAGES.
