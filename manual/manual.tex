@@ -1,11 +1,12 @@
 %### documentclass und packages
 %###################################################
 
-%\documentclass[11pt, abstracton, twoside]{scrreprt}
-\documentclass[11pt, abstracton, twoside]{scrbook}
+\documentclass[11pt, abstracton, twoside]{scrreprt}
+%\documentclass[11pt, abstracton, twoside]{scrbook}
 \usepackage{amsmath}
-\usepackage[ngerman, english]{babel}
-\usepackage[amssymb]{SIunits}
+%\usepackage[ngerman, english]{babel}
+\usepackage[english]{babel}
+%\usepackage[amssymb]{SIunits}
 \usepackage{graphicx}
 \usepackage{braket}
 \usepackage{rotating}
@@ -15,7 +16,7 @@
 %\usepackage{url}
 \usepackage{hyperref}
 \usepackage{geometry}
-\usepackage{aas_macros}
+%\usepackage{aas_macros}
 \usepackage{color}
 \usepackage{amssymb}
 \usepackage{multirow}
@@ -55,15 +56,13 @@
 
 \title{\textbf{Manual for the illumination correction in THELI}}
 %\vspace{\baselineskip}
-\author{
-\Large{Dominik Klaes}
+\author{\Large{Dominik Klaes}
 \\
 \\
-Argelander Institute for Astronomy
-Auf dem H\"ugel 71
-53121 Bonn
-Germany
-angefertigt am Argelander-Institut f\"ur Astronomie
+Argelander Institute for Astronomy\\
+Auf dem H\"ugel 71\\
+53121 Bonn\\
+Germany\\
 \\
 \\
 \\
@@ -95,7 +94,10 @@ Contact: dklaes@astro.uni-bonn.de
 %### Einzelne Kapitel
 %###################################################
 
-\input{manual_illum_correction}
+\input{manual_main_script}
+\input{manual_fitting}
+\input{manual_calculations_after_fitting}
+\input{manual_checkplots}
 \input{manual_apply}
 \input{manual_duration}
 

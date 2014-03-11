@@ -1,0 +1,34 @@
+\chapter{Fitting data}
+\label{ch:IllumCorrectionFitting}
+The Python script illum\_correction\_fi.py reads the filtered data from the previous step, fits a model via a $\chi^2$ method and saves the resulting model prefactors to a text file. The coveriance matrix is also saved to a text file.\\
+The needed command line arguments are:
+\begin{table}[H]
+\centering
+\begin{tabular}{lp{11.5cm}}
+-i: & Input file containing the data to be fitted\\
+-t: & LDAC table name containg all data\\
+-p: & Output path where the coefficient and coveriance matrix files shall be saved to.\\
+\end{tabular}
+\caption{List of command line arguments for fitting script}
+\label{tab:CommandLineArgumentsFittingScript}
+\end{table}
+
+This script uses a $\chi^2$ method for fitting. As fitting function, 
+\begin{eqnarray}
+\epsilon = Ax^{2} + By^{2} + Cxy + Dx + Ey + F\left[chip\right]\label{eqn:residual}
+\end{eqnarray}
+is used, implemented in the code as
+\begin{equation}
+\epsilon = Ax^{2} + By^{2} + Cxy + Dx + Ey + \sum_{i=1}^{N} \delta_{iz}Fi .
+\label{eqn:resprog}
+\end{equation}
+Here, x represents a NumPy array with all x-coordinates, y an array with all y-coordinates and z an array with the corresponding information on which chip the object is located. That means for a given x, y, z triple, that F will only count where i=z, e.g. for z=1 (object is on the first chip), equation \ref{eqn:resprog} reads as
+\begin{eqnarray}
+\epsilon & = & Ax^{2} + By^{2} + Cxy + Dx + Ey + \underbrace{\delta_{11}}_{=1} F1 + \underbrace{\delta_{21}}_{=0} F2 + \underbrace{\delta_{31}}_{=0} F3 + ...\\
+ & = & Ax^{2} + By^{2} + Cxy + Dx + Ey + F1 .
+\end{eqnarray}
+Unfortunately, Python does not have an implemented $\delta$-function, so this had to be programmed by hand. This was done via the condition
+\begin{eqnarray}
+\mathrm{int}\left(i-z\right) == 0
+\end{eqnarray}
+As initial guess, all prefactors are set to 0.0 and all data points get an error calculated via Gaussian error propagation. At the moment the magnitude error of the observed objects and its counterpart from the reference catalog, the errors on the magnitude zeropoint, the extinction coefficient, the color term coefficient and color term are used. The error on the airmass is set to 0.0 because for this error no value is available or can be guessed.

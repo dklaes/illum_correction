@@ -1,0 +1,44 @@
+\chapter{Calculations after fitting}
+\label{ch:IllumCorrectionCalcsAfterFitting}
+The fitting results are first used to correct the data on catalog basis via
+\begin{eqnarray}
+m_{app,corr} = m_{app} - \epsilon
+\end{eqnarray}
+with $\epsilon$ defined as in equation \ref{eqn:residual}. Also the residuals after fitting, including errors (via Gaussian error propagation), are calculated accordingly.\\
+Additionally, the center position of the illumination correction can be obtained by the derivative of equation \ref{eqn:residual} via
+\begin{eqnarray}
+\frac{\partial \epsilon}{\partial x}  \stackrel{!}= 0 = 2Ax + Cy + D\label{eqn:delx} \\
+\frac{\partial \epsilon}{\partial y}  \stackrel{!}= 0 = 2By + Cx + E\label{eqn:dely}
+\end{eqnarray}
+Solving equation \ref{eqn:delx} for y and \ref{eqn:dely} for x:
+\begin{eqnarray}
+x = -\frac{2By + E}{C}\label{eqn:x}\\
+y = -\frac{2Ax + D}{C}\label{eqn:y}
+\end{eqnarray}
+Inserting result \ref{eqn:y} into equation \ref{eqn:x} and this afterwards again into \ref{eqn:y} yields:
+\begin{eqnarray}
+x_{max} & = & \frac{CE-2BD}{4AB-C^{2}}\label{eqn:ResultX}\\
+y_{max} & = & \frac{2AE-CD}{C^{2}-4AB}\label{eqn:ResultY} .
+\end{eqnarray}
+Afterwards, several statistics of the residuals before and after fitting are calculated for each individual chip and for all chips combined:
+\begin{itemize}
+\item mean according to equation \ref{eqn:mean}
+\item minimum
+\item maximum
+\item number of data points
+\item variance according to equation \ref{eqn:variance}
+\item standard deviation according to equation \ref{eqn:sigma}
+\item number of objects that are compatible with 0 within a $1\sigma$-error
+\item percent of objects that are compatible with 0 within a $1\sigma$-error (from 0 to 1)
+\item center position of the illumination correction (maximum of the polynomial) according to equation \ref{eqn:ResultX} and \ref{eqn:ResultY} including errors.
+\end{itemize}
+The following values are calculated only for the entire camera for the ellipse:
+\begin{itemize}
+\item length of the minor axis
+\item length of the major axis
+\item ellipticity
+\item numerical ellipticity
+\item Rotation w.r.t. the y-axis, counted clock-wise (CW)
+\item number of pixels that have a correction value between (at the moment) -0.015 and 0.0mag. These values are chosen such that in all illumination corrections, at least for KiDS observations, a certain number of pixels fulfil these requirements.
+\item last value, given in percent (from 0 to 1).
+\end{itemize}
