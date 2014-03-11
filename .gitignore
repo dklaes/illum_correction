@@ -3,3 +3,8 @@
 *#
 testing
 *.pyc
+*.aux
+*.log
+*.dvi
+*.toc
+*.out
