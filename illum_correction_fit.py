@@ -88,7 +88,7 @@ data = ldac.LDACCat(infile[0])[table]
 x = np.array(data['Xpos_mod'], dtype=np.float64)
 y = np.array(data['Ypos_mod'], dtype=np.float64)
 eps = np.array(data['Residual'], dtype=np.float64)
-chip = np.array(data['CHIP'], dtype=np.int)
+chip = np.array(data['IMAGEID'], dtype=np.int)
 sigma = np.array(data['Residual_Err'], dtype=np.float64)
 
 
