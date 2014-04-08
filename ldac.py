@@ -134,21 +134,25 @@ class LDACCat(object):
 
         return result
 
-    def __setitem__(self, table):
+    def __setitem__(self, name, table):
         """
         adds or replaces an LDAC table in this catalogue
+
+        >>> a['NEW_TABLE'] = b['OBJECTS'] # adds the new table 'NEW_TABLE' in
+                                          # 'a' from table 'OBJECTS' in 'b'.
         """
 
         if isinstance(table, LDACTable):
-            # check whether a table with table.name exists already:
+            # check whether a table with name exists already:
             exists = False
 
             for i in xrange(len(self.ldactables)):
-                if self.ldactables[i].hdu.name == table.name:
+                if self.ldactables[i].hdu.name == name:
                     self.ldactables[i] = table
                     exists = True
 
             if exists == False:
+                table.setname(name)
                 self.ldactables.append(table)
 
     def tables(self):
@@ -436,6 +440,7 @@ class LDACTable(object):
         hdu.header = a.hdu.header
         hdu.header.update('NAXIS2', nrows)
         hdu.columns = a.hdu.columns
+        hdu.name = a.hdu.name
       
         return LDACTable(hdu)
 
