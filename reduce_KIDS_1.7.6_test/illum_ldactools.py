@@ -106,9 +106,11 @@ def calcs_before_fitting(infile, outfile, table, external, replace=False):
   data['Xpos_mod'] = 2.0*Xpos_global/PIXXMAX
   
   data['Ypos_mod'] = 2.0*Ypos_global/PIXYMAX
+  
+  header[table] = data
 
   header.add_history('Added illumination correction calculations before fiiting.')
-  data.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 
 def calcs_after_fitting(infile, outfile, table, external, replace=False):
@@ -161,8 +163,10 @@ def calcs_after_fitting(infile, outfile, table, external, replace=False):
   
   data['Residual_fitted_Err'] = np.sqrt((Mag_fitted_Err)**2 + (-reference_err)**2)
   
+  header[table] = data
+  
   header.add_history('Added illumination correction calculations after fiiting.')
-  data.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 
 
@@ -525,13 +529,22 @@ def mag_dependency(infile, outfile, table, realisation=0):
   fmagdependency.close()
 
 
-def keytoasc (infile, outfile, table, key):
+def keytoasc (infile, outfile, table, key, replace=False):
   header = ldac.LDACCat(infile)
   data = header[table][key]
   asc = open(outfile, "w")
   for i in range(len(data)):
     asc.write("%d\n" % (data[i]))
   asc.close()
+
+def newseqnr(infile, outfile, table, replace=False):
+  header = ldac.LDACCat(infile)
+  data = header[table]
+  data['SeqNr'] = np.arange(1, len(data['SeqNr']+1))
+  header[table] = data
+    
+  header.add_history('Calculated new SeqNr.')
+  header.saveas(outfile, clobber=replace)
 
 
 opts, args = getopt.getopt(sys.argv[1:], "i:o:t:k:a:v:c:e:", ["input=", "output=", "table=", "key=", "action=", "value=", "condition=", "external="])
@@ -570,8 +583,10 @@ if (action == 'FILTER_ELEMENTS'):
   header = ldac.LDACCat(infile[0])
   data = header[table]
   data2 = filter_elements(data, key, value, condition)
+  header[table] = data2
+  
   header.add_history('Filtered with condition ' + str(key) + str(condition) + str(value) + '.')
-  data2.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 
 elif (action == 'UNIQUE_ELEMENTS'):
@@ -589,8 +604,10 @@ elif (action == 'PASTE_TABLES'):
     for i in range(len(infile)-1):
       b = ldac.LDACCat(infile[i+1])[table]
       a = a + b
+    header[table] = a
+    
     header.add_history('Pasted table ' + str(table) + 'from files ' + str(infile) + '.')
-    a.saveas(outfile, clobber=True)
+    header.saveas(outfile, clobber=True)
 
 
 elif (action == 'CALCS_BEFORE_FITTING'):
@@ -621,10 +638,11 @@ elif (action == 'FILTER_PERCENT'):
   uppervalue = datasorted[length-numberupper]
   
   data2 = filter_elements(data, key, lowervalue, '>')
-  data = filter_elements(data2, key, uppervalue, '<')
+  data3 = filter_elements(data2, key, uppervalue, '<')
+  header[table] = data3
   
   header.add_history('Percentage filter: ' + str(lowervalue) + '% < ' + str(key) + ' < ' + str(uppervalue) + '%.')
-  data.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 
 elif (action == 'FILTER_RESIDUAL'):
@@ -638,10 +656,11 @@ elif (action == 'FILTER_RESIDUAL'):
   uppercutresabs = float(external[1])
   
   data2 = filter_elements(data, key, lowercutresabs, '>')
-  data = filter_elements(data2, key, uppercutresabs, '<')
+  data3 = filter_elements(data2, key, uppercutresabs, '<')
+  header[table] = data3
   
   header.add_history('Residual filter: ' + str(lowercutresabs) + ' < ' + str(key) + ' < ' + str(uppercutresabs) + '.')
-  data.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 
 elif (action == 'FILTER_RESIDUALMEAN'):
@@ -657,10 +676,11 @@ elif (action == 'FILTER_RESIDUALMEAN'):
   mean = np.mean(data[key])
   
   data2 = filter_elements(data, key, lowercutresmean+mean, '>')
-  data = filter_elements(data2, key, uppercutresmean+mean, '<')
+  data3 = filter_elements(data2, key, uppercutresmean+mean, '<')
+  header[table] = data3
   
   header.add_history('Residual filter w.r.t. the mean (mean = ' + str(mean) + '): ' + str(lowercutresmean+mean) + ' < ' + str(key) + ' < ' + str(uppercutresmean+mean) + '.')
-  data.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 
 elif (action == 'FILTER_MAGNITUDE'):
@@ -674,10 +694,11 @@ elif (action == 'FILTER_MAGNITUDE'):
   uppercutmag = float(external[1])
   
   data2 = filter_elements(data, key, lowercutmag, '>')
-  data = filter_elements(data2, key, uppercutmag, '<')
+  data3 = filter_elements(data2, key, uppercutmag, '<')
+  header[table] = data3
   
   header.add_history('Magnitude filter: ' + str(lowercutmag) + ' < ' + str(key) + ' < ' + str(uppercutmag) + '.')
-  data.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 
 elif (action == 'FILTER_SIGMA'):
@@ -693,10 +714,11 @@ elif (action == 'FILTER_SIGMA'):
   sigma = np.std(data[key])
   
   data2 = filter_elements(data, key, mean-sigmawidth*sigma, '>')
-  data = filter_elements(data2, key, mean+sigmawidth*sigma, '<')
+  data3 = filter_elements(data2, key, mean+sigmawidth*sigma, '<')
+  header[table] = data3
   
   header.add_history('Sigma clipping filter (sigma = ' + str(sigma) + ', sigmawidth = ' + str(sigmawidth) + '): ' + str(mean-sigmawidth*sigma) + ' < ' + str(key) + ' < ' + str(mean+sigmawidth*sigma) + '.')
-  data.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 
 elif (action == 'NUMBER_OF_ELEMENTS'):
@@ -781,10 +803,11 @@ elif (action == 'FILTER_USUABLE'):
   data6 = filter_elements(data5, color2, 99, '<')
   data7 = filter_elements(data6, color2, -9999, '>')
   data8 = filter_elements(data7, colorname, 10, '<')
-  data = filter_elements(data8, colorname, -10, '>')
+  data9 = filter_elements(data8, colorname, -10, '>')
+  header[table] = data9
   
   header.add_history('Filter usuable magnitude values for both color filters and reference filter, meaning between -9999 and 99.')
-  data.saveas(outfile, clobber=replace)
+  header.saveas(outfile, clobber=replace)
 
 elif (action == 'CHECK_ENOUGH_OBJECTS'):
   data = ldac.LDACCat(infile[0])[table]
@@ -795,4 +818,7 @@ elif (action == 'MAG_DEPENDENCY'):
   mag_dependency(infile[0], outfile, table)
 
 elif (action == 'KEYTOASC'):
-  keytoasc (infile[0], outfile, table, key)
+  keytoasc(infile[0], outfile, table, key)
+
+elif (action == 'NEWSEQNR'):
+  newseqnr(infile[0], outfile, table, replace=True)

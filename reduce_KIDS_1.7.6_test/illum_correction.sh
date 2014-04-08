@@ -245,7 +245,9 @@ do
     fi
   done
 
-  cp ${TEMPDIR}/tmp_filter.cat${i}_$$ ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat
+  ${P_PYTHON} illum_ldactools.py -i ${TEMPDIR}/tmp_filter.cat${i}_$$ -t PSSC \
+		      -o ${MAIND}/${STANDARDD}/calib/residuals_${NIGHT}/chip_all_filtered.cat \
+		      -a NEWSEQNR
 
   # Splitting up one catalogue with all chips into ${NUMCHIPS} files.
   # Check, if for all chips enough objects are available. If not, warn.
