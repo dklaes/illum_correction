@@ -98,7 +98,7 @@ class LDACCat(object):
                 for hdu in hdulist:
                     if isinstance(hdu, pyfits.PrimaryHDU) == True:
                         self.header = hdu.header
-			if hdu.size() != 0:
+			if hdu.size != 0:
 				self.ldactables.append(LDACTable(hdu))
 				self.isprimarydatatable.append(1)
                     if isinstance(hdu, pyfits.BinTableHDU) == True:
@@ -259,7 +259,7 @@ class LDACTable(object):
 
         # 'self.hdu.data' leads to an exception for an empty catalogue.
         # Hence we check for this first:
-        if self.hdu.size() == 0:
+        if self.hdu.size == 0:
             return 0
         else:
             return len(self.hdu.data)
@@ -334,6 +334,9 @@ class LDACTable(object):
                     
                     if numpy.issubdtype(val.dtype, int) == True:
                         colformat="1I"
+
+                    if numpy.issubdtype(val.dtype, str) == True:
+                        colformat="100A"
                     
                     # now create the new column and create a 'new' table
                     # with the old plus the new column (I did not find a
